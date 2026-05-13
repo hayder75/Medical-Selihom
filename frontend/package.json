@@ -26,8 +26,10 @@
     "react-router-dom": "^6.8.1",
     "react-select": "^5.7.0",
     "react-toastify": "^11.0.5",
+    "react-webcam": "^7.2.0",
     "recharts": "^2.5.0",
-    "tailwind-merge": "^1.10.0"
+    "tailwind-merge": "^1.10.0",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.28",

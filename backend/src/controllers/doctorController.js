@@ -3067,12 +3067,31 @@ exports.getVisitDetails = async (req, res) => {
       console.warn('Could not fetch compoundPrescriptions:', cpErr.message);
     }
 
+    const labResults = [];
+    for (const labTestOrder of visit.labTestOrders || []) {
+      const orderResult = labTestOrder.results && labTestOrder.results.length > 0 ? labTestOrder.results[0] : null;
+      labResults.push({
+        id: 'labtestorder-' + labTestOrder.id,
+        testType: labTestOrder.labTest || { name: 'Lab Test', category: 'GENERAL' },
+        resultText: orderResult ? orderResult.additionalNotes : null,
+        detailedResults: [],
+        additionalNotes: labTestOrder.instructions || (orderResult ? orderResult.additionalNotes : ''),
+        status: labTestOrder.status || 'PENDING',
+        attachments: orderResult ? orderResult.attachments : [],
+        results: orderResult && orderResult.results ? { ...orderResult.results, _images: orderResult.results._images || [] } : { _images: [] },
+        createdAt: labTestOrder.createdAt,
+        verifiedBy: orderResult ? orderResult.verifiedBy : null,
+        verifiedAt: orderResult ? orderResult.verifiedAt : null
+      });
+    }
+
     res.json({
       ...visit,
       diagnoses: visit.patientDiagnoses || [],
       compoundPrescriptions,
       procedures,
-      radiologyOrders
+      radiologyOrders,
+      labResults
     });
   } catch (error) {
     console.error('Error fetching visit details:', error);

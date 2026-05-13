@@ -40,7 +40,7 @@ console.log('📍 Current Location:', window.location.href);
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 60000,
   withCredentials: true,
 });
 

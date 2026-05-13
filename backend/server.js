@@ -103,7 +103,7 @@ app.use(helmet({
 
 // CORS configuration now moved up
 app.use(morgan('dev')); // Enabled for debugging
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 // Serve uploads folder line removed from here
 
 // Serve static frontend files if dist folder exists (for compiled deployment)

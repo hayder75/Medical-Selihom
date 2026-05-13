@@ -1159,7 +1159,8 @@ const saveLabTestResult = async (req, res) => {
     const hasAnyResultData = hasMeaningfulResults(effectiveResults);
     const hasAdditionalNotes = typeof additionalNotes === 'string' && additionalNotes.trim() !== '';
 
-    if (requestedFinalize && !hasAnyResultData && !hasAdditionalNotes) {
+    const hasImages = incomingResults._images && incomingResults._images.length > 0;
+    if (requestedFinalize && !hasAnyResultData && !hasAdditionalNotes && !hasImages) {
       return res.status(400).json({
         error: 'Cannot finalize lab test without result values. Please enter at least one test value or note.'
       });
