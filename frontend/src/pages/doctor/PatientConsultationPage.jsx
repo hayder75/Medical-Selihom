@@ -2822,12 +2822,44 @@ const PatientConsultationPage = () => {
                                         const cleanedInstruction = (med.instructionText || med.instructions || '').replace(/^\s*for\s+/i, '').trim();
 
                                         return (
-                                        <div key={idx} className="p-4 border rounded-lg bg-white shadow-sm">
-                                          <p className="font-bold text-gray-900">{med.name}</p>
+                                        <div key={idx} className="p-4 border border-indigo-100 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
+                                          <div className="flex items-start gap-3">
+                                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                                              <Pill className="h-4 w-4 text-white" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-bold text-gray-900 text-base leading-tight">{med.name}</p>
+                                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                                {med.dosageForm && (
+                                                  <span className="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded font-medium">{med.dosageForm}</span>
+                                                )}
+                                                {med.strength && (
+                                                  <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded font-medium">{med.strength}</span>
+                                                )}
+                                                {med.category && (
+                                                  <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">{med.category}</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600">
+                                            {med.quantityNumeric > 0 && (
+                                              <div><span className="font-medium text-gray-500">Qty:</span> {med.quantityNumeric} {med.unit || ''}</div>
+                                            )}
+                                            {med.frequencyType && (
+                                              <div><span className="font-medium text-gray-500">Freq:</span> {med.frequencyType.replace(/_/g, ' ')}</div>
+                                            )}
+                                            {med.durationValue && (
+                                              <div><span className="font-medium text-gray-500">Duration:</span> {med.durationValue} {med.durationUnit?.toLowerCase() || ''}</div>
+                                            )}
+                                            {med.route && (
+                                              <div><span className="font-medium text-gray-500">Route:</span> {med.route}</div>
+                                            )}
+                                          </div>
                                           {cleanedInstruction && (
-                                            <p className="text-sm text-indigo-600 mt-2 bg-indigo-50 p-2 rounded">
+                                            <div className="mt-2 text-xs text-indigo-700 bg-indigo-50/80 p-2 rounded-lg border border-indigo-100">
                                               <span className="font-semibold">Instructions:</span> {cleanedInstruction}
-                                            </p>
+                                            </div>
                                           )}
                                         </div>
                                       );
@@ -2873,45 +2905,64 @@ const PatientConsultationPage = () => {
                                     </div>
                                   </div>
                                   {selectedVisit.compoundPrescriptions && selectedVisit.compoundPrescriptions.length > 0 ? (
-                                    <div className="space-y-3">
-                                      {selectedVisit.compoundPrescriptions.map((cp, idx) => (
-                                        <div key={idx} className="p-4 border border-amber-200 rounded-lg bg-amber-50 shadow-sm">
-                                          <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                              <p className="font-bold text-amber-900 text-lg">{cp.formulationType} - {cp.quantity}{cp.quantityUnit}</p>
-                                              <p className="text-xs font-mono text-amber-700">{cp.referenceNumber}</p>
+                                    <div className="space-y-4">
+                                      {selectedVisit.compoundPrescriptions.map((cp, idx) => {
+                                        const txt = cp.prescriptionText || cp.rawText || '';
+                                        return (
+                                        <div key={idx} className="p-5 border border-amber-200 rounded-xl bg-gradient-to-br from-amber-50 to-white shadow-sm">
+                                          <div className="flex justify-between items-start mb-3">
+                                            <div className="flex items-center gap-2">
+                                              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-sm">
+                                                <span className="text-white text-xs font-bold">Rx</span>
+                                              </div>
+                                              <div>
+                                                <p className="font-bold text-amber-900 text-base">{cp.formulationType || 'Compound'} {cp.quantity ? `${cp.quantity}${cp.quantityUnit || ''}` : ''}</p>
+                                                <p className="text-xs font-mono text-amber-600">{cp.referenceNumber}</p>
+                                              </div>
                                             </div>
-                                            <span className="px-2 py-1 bg-amber-200 text-amber-800 rounded text-xs font-medium">
+                                            <span className="px-2 py-0.5 bg-amber-200 text-amber-800 rounded-full text-xs font-semibold">
                                               {cp.status || 'PRESCRIBED'}
                                             </span>
                                           </div>
-                                          <div className="text-sm text-amber-800 mb-2 p-2 bg-white rounded border border-amber-100">
-                                            <span className="font-bold">Active Ingredients:</span>
-                                            <ul className="list-disc list-inside mt-1">
-                                              {cp.ingredients?.map((ing, i) => (
-                                                <li key={i}>{ing.ingredientName} <span className="font-mono">{ing.strength}{ing.unit}</span></li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                          <div className="flex flex-wrap gap-4 text-sm text-amber-800 mt-2">
-                                            {cp.frequencyType && (
-                                              <div>
-                                                <span className="font-medium">Sig:</span> {cp.frequencyType.replace(/_/g, ' ')}
+
+                                          {txt && (
+                                            <div className="mb-3 p-3 bg-white rounded-lg border border-amber-200 shadow-inner">
+                                              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 mb-1">Prescription</p>
+                                              <p className="text-sm font-medium text-gray-900 leading-relaxed whitespace-pre-wrap">{txt}</p>
+                                            </div>
+                                          )}
+
+                                          {cp.ingredients?.length > 0 && (
+                                            <div className="mb-3">
+                                              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 mb-1.5">Active Ingredients</p>
+                                              <div className="flex flex-wrap gap-1.5">
+                                                {cp.ingredients.map((ing, i) => (
+                                                  <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-md border border-amber-200 text-xs text-amber-900">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                                                    {ing.ingredientName} <span className="font-mono font-semibold text-amber-700">{ing.strength}{ing.unit}</span>
+                                                  </span>
+                                                ))}
                                               </div>
-                                            )}
-                                            {cp.durationValue && (
-                                              <div>
-                                                <span className="font-medium">Duration:</span> {cp.durationValue} {cp.durationUnit?.toLowerCase()}
-                                              </div>
-                                            )}
-                                          </div>
-                                          {(cp.prescriptionText || cp.rawText || cp.instructions) && (
-                                            <div className="text-xs text-amber-700 italic mt-2 bg-amber-100 p-2 rounded">
-                                              Note: {cp.prescriptionText || cp.rawText || cp.instructions}
+                                            </div>
+                                          )}
+
+                                          {(cp.frequencyType || cp.durationValue) && (
+                                            <div className="flex flex-wrap gap-2">
+                                              {cp.frequencyType && (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 rounded-full text-xs text-amber-800">
+                                                  Sig: {cp.frequencyType.replace(/_/g, ' ')}
+                                                </span>
+                                              )}
+                                              {cp.durationValue && (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 rounded-full text-xs text-amber-800">
+                                                  Duration: {cp.durationValue} {cp.durationUnit?.toLowerCase()}
+                                                </span>
+                                              )}
                                             </div>
                                           )}
                                         </div>
-                                      ))}
+                                      );
+                                      })}
                                     </div>
                                   ) : (
                                     <p className="text-gray-500">No compound prescriptions for this visit</p>

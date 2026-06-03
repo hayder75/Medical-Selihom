@@ -265,6 +265,20 @@ const ComprehensivePatientHistory = () => {
     if (!dob) return 'N/A';
     const birthDate = new Date(dob);
     const today = new Date();
+    const ageInMs = today - birthDate;
+    const ageInDays = Math.floor(ageInMs / (1000 * 60 * 60 * 24));
+    
+    // Less than 1 year old - show in months or days
+    if (ageInDays < 365) {
+      const months = Math.floor(ageInDays / 30.44); // Average days per month
+      const remainingDays = Math.floor(ageInDays % 30.44);
+      if (months === 0) {
+        return remainingDays + ' day(s)';
+      }
+      return months + ' month(s)';
+    }
+    
+    // 1 year and older - show in years
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
@@ -2234,57 +2248,73 @@ const ComprehensivePatientHistory = () => {
                     )}
                   </div>
                   <div className="space-y-4">
-                    {selectedVisit.compoundPrescriptions.map((cp, idx) => (
-                      <div key={idx} className="p-4 border border-amber-200 rounded-lg bg-amber-50 shadow-sm transition-all hover:shadow-md">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <p className="font-bold text-amber-900 text-lg">{cp.formulationType} - {cp.quantity}{cp.quantityUnit}</p>
-                            <span className="text-xs font-mono bg-white/50 px-2 py-0.5 rounded text-amber-800 border border-amber-200">{cp.referenceNumber || 'No Ref #'}</span>
+                    {selectedVisit.compoundPrescriptions.map((cp, idx) => {
+                      const txt = cp.prescriptionText || cp.rawText || '';
+                      return (
+                      <div key={idx} className="p-5 border border-amber-200 rounded-xl bg-gradient-to-br from-amber-50 to-white shadow-sm transition-all hover:shadow-md">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-2">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-sm">
+                              <Beaker className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-amber-900 text-lg leading-tight">{cp.formulationType || 'Compound'} {cp.quantity ? ` - ${cp.quantity}${cp.quantityUnit || ''}` : ''}</p>
+                              <span className="text-xs font-mono bg-amber-100/80 px-2 py-0.5 rounded text-amber-700 border border-amber-200">{cp.referenceNumber || 'No Ref #'}</span>
+                            </div>
                           </div>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cp.status || 'PRESCRIBED')}`}>
+                          <span className={'px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ' + getStatusColor(cp.status || 'PRESCRIBED')}>
                             {cp.status || 'PRESCRIBED'}
                           </span>
                         </div>
-                        <div className="text-sm text-amber-800 mb-2 p-3 bg-white/60 rounded-lg border border-amber-100">
-                          <span className="font-bold block mb-2 text-amber-900">Active Ingredients:</span>
-                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 list-disc list-inside">
-                            {cp.ingredients?.map((ing, i) => (
-                              <li key={i} className="text-amber-800 drop-shadow-sm">
-                                {ing.ingredientName} <span className="font-mono font-bold">{ing.strength}{ing.unit}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-amber-900 mt-3 pt-3 border-t border-amber-200">
-                          {cp.frequencyType && (
-                            <div className="flex items-center gap-2">
-                              <div className="h-6 w-6 rounded-full bg-amber-100 flex items-center justify-center">
-                                <Clock className="h-3 w-3" />
-                              </div>
-                              <p><span className="font-bold">Sig:</span> {cp.frequencyType.replace(/_/g, ' ')}</p>
-                            </div>
-                          )}
-                          {cp.durationValue && (
-                            <div className="flex items-center gap-2">
-                              <div className="h-6 w-6 rounded-full bg-amber-100 flex items-center justify-center">
-                                <Calendar className="h-3 w-3" />
-                              </div>
-                              <p><span className="font-bold">Duration:</span> {cp.durationValue} {cp.durationUnit?.toLowerCase()}</p>
-                            </div>
-                          )}
-                        </div>
-                        {(cp.prescriptionText || cp.rawText || cp.instructions) && (
-                          <div className="text-sm text-amber-700 italic mt-3 bg-white/40 p-3 rounded-lg border border-amber-100">
-                            <span className="font-bold not-italic text-amber-900 block mb-1">Pharmacist Instructions:</span>
-                            {cp.prescriptionText || cp.rawText || cp.instructions}
+
+                        {txt && (
+                          <div className="mb-4 p-4 bg-white rounded-xl border border-amber-200 shadow-inner">
+                            <p className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-2">Prescription</p>
+                            <p className="text-base font-medium text-gray-900 leading-relaxed whitespace-pre-wrap">{txt}</p>
                           </div>
                         )}
-                        <div className="mt-3 pt-2 text-[10px] text-amber-600 flex justify-between">
+
+                        {cp.ingredients?.length > 0 && (
+                          <div className="mb-4">
+                            <p className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-2">Active Ingredients</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {cp.ingredients.map((ing, i) => (
+                                <div key={i} className="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg border border-amber-100">
+                                  <div className="h-2 w-2 rounded-full bg-amber-400 flex-shrink-0" />
+                                  <span className="text-sm text-amber-900">
+                                    <span className="font-semibold">{ing.ingredientName}</span>
+                                    <span className="font-mono text-amber-700 ml-1">{ing.strength}{ing.unit}</span>
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {(cp.frequencyType || cp.durationValue) && (
+                          <div className="flex flex-wrap gap-3 mb-3">
+                            {cp.frequencyType && (
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 rounded-full text-sm text-amber-800">
+                                <Clock className="h-3.5 w-3.5" />
+                                <span><span className="font-semibold">Sig:</span> {cp.frequencyType.replace(/_/g, ' ')}</span>
+                              </div>
+                            )}
+                            {cp.durationValue && (
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 rounded-full text-sm text-amber-800">
+                                <Calendar className="h-3.5 w-3.5" />
+                                <span><span className="font-semibold">Duration:</span> {cp.durationValue} {cp.durationUnit?.toLowerCase()}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="mt-4 pt-3 border-t border-amber-200 flex justify-between text-xs text-amber-600">
                           <span>Date: {cp.createdAt ? new Date(cp.createdAt).toLocaleString() : 'N/A'}</span>
-                          <span>Prescription Order</span>
+                          <span>#{idx + 1}</span>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

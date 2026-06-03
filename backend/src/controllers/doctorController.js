@@ -7493,3 +7493,90 @@ exports.getDailyWorkDayDetails = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+
+// Bulk complete all active visits for the logged-in doctor
+exports.bulkCompleteActiveVisits = async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+
+    // Also find assignments for this doctor
+    const assignments = await prisma.assignment.findMany({
+      where: { doctorId, status: 'ACTIVE' },
+      select: { id: true }
+    });
+    const assignmentIds = assignments.map(a => a.id);
+    console.log('Doctor ID:', doctorId, 'Found assignments:', assignmentIds.length);
+
+    const activeVisits = await prisma.visit.findMany({
+      where: {
+        OR: [
+          { createdById: doctorId },
+          { suggestedDoctorId: doctorId },
+          { assignmentId: { in: assignmentIds } }
+        ],
+        status: { notIn: ['COMPLETED', 'CANCELLED'] }
+      },
+      select: { id: true, visitUid: true, status: true, patientId: true }
+    });
+    console.log('Active visits found:', activeVisits.length, 'IDs:', activeVisits.map(v => v.id + ':' + v.status));
+
+    // Check for active bed admissions — skip those patients
+    const visitPatientIds = [...new Set(activeVisits.filter(v => v.patientId).map(v => v.patientId))];
+    let patientIdsWithBeds = new Set();
+    if (visitPatientIds.length > 0) {
+      const activeAdmissions = await prisma.admission.findMany({
+        where: {
+          patientId: { in: visitPatientIds },
+          status: 'ADMITTED'
+        },
+        select: { patientId: true }
+      });
+      patientIdsWithBeds = new Set(activeAdmissions.map(a => a.patientId));
+    }
+
+    const visitsToComplete = activeVisits.filter(v => !patientIdsWithBeds.has(v.patientId));
+    const skippedVisits = activeVisits.filter(v => patientIdsWithBeds.has(v.patientId));
+    const count = visitsToComplete.length;
+    const skippedCount = skippedVisits.length;
+
+    if (count === 0) {
+      return res.json({
+        success: true,
+        message: skippedCount > 0
+          ? `No visits to complete (${skippedCount} patient(s) skipped due to active bed admission)`
+          : 'No active visits to complete',
+        count: 0,
+        skipped: skippedCount,
+        skippedVisitUids: skippedVisits.map(v => v.visitUid)
+      });
+    }
+
+    const visitIds = visitsToComplete.map(v => v.id);
+
+    await prisma.visit.updateMany({
+      where: { id: { in: visitIds } },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+
+    let message = `Completed ${count} visit(s) successfully`;
+    if (skippedCount > 0) {
+      message += `. ${skippedCount} patient(s) skipped (active bed admission)`;
+    }
+
+    res.json({
+      success: true,
+      message,
+      count,
+      skipped: skippedCount,
+      skippedVisitUids: skippedVisits.map(v => v.visitUid)
+    });
+  } catch (error) {
+    console.error('Error bulk completing visits:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

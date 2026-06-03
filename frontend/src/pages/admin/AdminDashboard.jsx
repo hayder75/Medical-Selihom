@@ -238,40 +238,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="card">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <div className="flex items-center">
-              <div className="h-2 w-2 bg-green-500 rounded-full mr-3"></div>
-              <span className="text-sm text-gray-600">Dr. Smith completed patient visit</span>
-            </div>
-            <span className="text-xs text-gray-400">2 minutes ago</span>
-          </div>
-          <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <div className="flex items-center">
-              <div className="h-2 w-2 bg-blue-500 rounded-full mr-3"></div>
-              <span className="text-sm text-gray-600">New patient registered</span>
-            </div>
-            <span className="text-xs text-gray-400">5 minutes ago</span>
-          </div>
-          <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <div className="flex items-center">
-              <div className="h-2 w-2 bg-yellow-500 rounded-full mr-3"></div>
-              <span className="text-sm text-gray-600">Lab result uploaded</span>
-            </div>
-            <span className="text-xs text-gray-400">10 minutes ago</span>
-          </div>
-          <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <div className="flex items-center">
-              <div className="h-2 w-2 bg-purple-500 rounded-full mr-3"></div>
-              <span className="text-sm text-gray-600">Medication dispensed</span>
-            </div>
-            <span className="text-xs text-gray-400">15 minutes ago</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 

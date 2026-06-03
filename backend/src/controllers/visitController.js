@@ -374,3 +374,100 @@ exports.getVisitsByStatus = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+// Get patient's active (non-completed, non-cancelled) visit with doctor info
+exports.getPatientActiveVisit = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+
+    const activeVisit = await prisma.visit.findFirst({
+      where: {
+        patientId,
+        status: { notIn: ['COMPLETED', 'CANCELLED'] }
+      },
+      include: {
+        createdBy: {
+          select: { id: true, fullname: true, role: true }
+        },
+        _count: {
+          select: {
+            labOrders: true,
+            radiologyOrders: true,
+            medicationOrders: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!activeVisit) {
+      return res.json({ activeVisit: null });
+    }
+
+    res.json({ activeVisit });
+  } catch (error) {
+    console.error('Error fetching active visit:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Complete a patient's active visit (for billing/reception use)
+exports.completePatientActiveVisit = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+
+    const activeVisit = await prisma.visit.findFirst({
+      where: {
+        patientId,
+        status: { notIn: ['COMPLETED', 'CANCELLED'] }
+      },
+      include: {
+        createdBy: {
+          select: { id: true, fullname: true }
+        }
+      }
+    });
+
+    if (!activeVisit) {
+      return res.status(404).json({ error: 'No active visit found for this patient' });
+    }
+
+    // Check if patient has an active bed admission
+    const activeAdmission = await prisma.admission.findFirst({
+      where: {
+        patientId,
+        status: 'ADMITTED'
+      }
+    });
+
+    if (activeAdmission) {
+      return res.status(400).json({
+        error: 'Cannot complete visit: patient has an active bed admission (bed ' + activeAdmission.bedId + '). Please discharge the patient from the bed first.'
+      });
+    }
+
+    await prisma.visit.update({
+      where: { id: activeVisit.id },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Visit completed successfully',
+      visit: {
+        id: activeVisit.id,
+        visitUid: activeVisit.visitUid,
+        status: 'COMPLETED',
+        doctor: activeVisit.createdBy?.fullname || 'N/A'
+      }
+    });
+  } catch (error) {
+    console.error('Error completing active visit:', error);
+    res.status(500).json({ error: error.message });
+  }
+};

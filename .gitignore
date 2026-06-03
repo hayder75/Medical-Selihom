@@ -41,3 +41,8 @@ frontend/.cache/
 tmp/
 temp/
 *.bak
+
+# System export data
+backend/system-data.json
+backend/system-full-data.json
+backend/export-*.js

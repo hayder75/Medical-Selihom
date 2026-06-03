@@ -225,6 +225,7 @@ router.put('/visits/:visitId/diagnosis-notes/:noteId', doctorController.updateDi
 router.delete('/visits/:visitId', doctorController.deleteVisit);
 router.post('/complete', doctorController.completeVisit);
 router.post('/direct-complete', doctorController.directCompleteVisit);
+router.post('/bulk-complete-active-visits', auth, roleGuard(DOCTOR_ROLES), doctorController.bulkCompleteActiveVisits);
 
 router.patch('/medication-order/:id', auth, roleGuard(DOCTOR_ROLES), doctorController.updateMedicationOrder);
 router.delete('/medication-order/:id', auth, roleGuard(DOCTOR_ROLES), doctorController.deleteMedicationOrder);

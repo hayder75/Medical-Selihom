@@ -28,6 +28,10 @@ const PatientManagement = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientHistory, setPatientHistory] = useState(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showCompleteVisitModal, setShowCompleteVisitModal] = useState(false);
+  const [completingVisit, setCompletingVisit] = useState(false);
+  const [activeVisitData, setActiveVisitData] = useState(null);
+  const [patientForComplete, setPatientForComplete] = useState(null);
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, expired: 0 });
   const [activatingCard, setActivatingCard] = useState(false);
   const [updatingPatient, setUpdatingPatient] = useState(false);
@@ -223,6 +227,47 @@ const PatientManagement = () => {
     return matchesSearch && matchesCardStatus;
   });
 
+
+  const handleCompleteVisit = async (patient) => {
+    try {
+      setPatientForComplete(patient);
+      const res = await api.get(`/visits/patient/${patient.id}/active`);
+      if (!res.data.activeVisit) {
+        toast.error('No active visit found for this patient');
+        setPatientForComplete(null);
+        return;
+      }
+      setActiveVisitData(res.data.activeVisit);
+      setShowCompleteVisitModal(true);
+    } catch (err) {
+      console.error('Error fetching active visit:', err);
+      toast.error('Failed to fetch active visit');
+      setPatientForComplete(null);
+    }
+  };
+
+  const confirmCompleteVisit = async () => {
+    if (!patientForComplete) return;
+    try {
+      setCompletingVisit(true);
+      const res = await api.post(`/visits/patient/${patientForComplete.id}/complete-active`);
+      toast.success(res.data.message || 'Visit completed successfully');
+      setShowCompleteVisitModal(false);
+      setActiveVisitData(null);
+      setPatientForComplete(null);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to complete visit');
+    } finally {
+      setCompletingVisit(false);
+    }
+  };
+
+  const closeCompleteVisitModal = () => {
+    setShowCompleteVisitModal(false);
+    setActiveVisitData(null);
+    setPatientForComplete(null);
+  };
+
   return (
     <div className="p-6">
 
@@ -401,6 +446,13 @@ const PatientManagement = () => {
                         >
                           View History
                         </button>
+                        <button
+                          onClick={() => handleCompleteVisit(patient)}
+                          className="text-purple-600 hover:text-purple-900 flex items-center gap-1"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Complete Visit
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -411,6 +463,55 @@ const PatientManagement = () => {
         </div>
       </div>
 
+
+      {/* Complete Visit Modal */}
+      {showCompleteVisitModal && activeVisitData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
+            <button onClick={closeCompleteVisitModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Complete Active Visit</h3>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-4 mb-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Patient:</span>
+                <span className="font-semibold text-gray-900">{patientForComplete?.name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Visit ID:</span>
+                <span className="font-mono font-semibold text-gray-900">{activeVisitData.visitUid}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Doctor:</span>
+                <span className="font-semibold text-gray-900">{activeVisitData.createdBy?.fullname || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Status:</span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">{activeVisitData.status?.replace(/_/g, ' ')}</span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-5">This will mark the visit as completed and remove the patient from the active queue. The patient will be able to create a new visit.</p>
+            <div className="flex gap-3">
+              <button onClick={closeCompleteVisitModal} className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button onClick={confirmCompleteVisit} disabled={completingVisit} className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
+                {completingVisit ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    Completing...
+                  </>
+                ) : 'Confirm Complete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Activate Card Modal */}
       {showActivateModal && selectedPatient && (

@@ -9,6 +9,7 @@ import MedicalCertificates from './MedicalCertificates';
 import ReferralPage from './ReferralPage';
 import InternationalMedicalCertificatePage from './InternationalMedicalCertificatePage';
 import DoctorDailyWork from './DoctorDailyWork';
+import toast from 'react-hot-toast';
 import api from '../../services/api';
 import {
   Stethoscope,
@@ -17,6 +18,7 @@ import {
   Activity,
   Clock,
   CheckCircle,
+  X,
   AlertTriangle
 } from 'lucide-react';
 
@@ -29,6 +31,10 @@ const DoctorDashboard = () => {
   });
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showCompleteAllModal, setShowCompleteAllModal] = useState(false);
+  const [completingAll, setCompletingAll] = useState(false);
+  const [completeAllCount, setCompleteAllCount] = useState(0);
+  const [fetchingCompleteCount, setFetchingCompleteCount] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -52,6 +58,57 @@ const DoctorDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+
+  const handleCompleteAllClick = async () => {
+    console.log("[CompleteAll] Button clicked, fetching count...");
+    try {
+      setFetchingCompleteCount(true);
+      const res = await api.get('/doctors/dashboard-stats');
+      const waitingCount = res.data.waitingPatients || 0;
+      console.log("[CompleteAll] Waiting count:", waitingCount);
+      if (waitingCount === 0) {
+        toast.success('No active visits to complete');
+        return;
+      }
+      setCompleteAllCount(waitingCount);
+      setShowCompleteAllModal(true);
+      console.log("[CompleteAll] Modal shown, count:", waitingCount);
+    } catch (err) {
+      console.error("[CompleteAll] API error:", err.response?.data || err.message);
+      toast.error("Failed to check active visits");
+    } finally {
+      setFetchingCompleteCount(false);
+    }
+  };
+
+  const confirmCompleteAll = async () => {
+    console.log("[CompleteAll] Confirm clicked, posting to API...");
+    try {
+      setCompletingAll(true);
+      const res = await api.post('/doctors/bulk-complete-active-visits');
+      console.log("[CompleteAll] API success:", res.data);
+      if (res.data.skipped > 0) {
+        toast.success(res.data.message || 'All visits completed successfully', { duration: 5000 });
+        toast('Skipped ' + res.data.skipped + ' patient(s) with active bed admissions', { icon: '⚠️', duration: 5000 });
+      } else {
+        toast.success(res.data.message || 'All visits completed successfully');
+      }
+      setShowCompleteAllModal(false);
+      setCompleteAllCount(0);
+      fetchDashboardData();
+    } catch (err) {
+      console.error("[CompleteAll] API error:", err.response?.data || err.message);
+      toast.error(err.response?.data?.error || 'Failed to complete visits');
+    } finally {
+      setCompletingAll(false);
+    }
+  };
+
+  const closeCompleteAllModal = () => {
+    setShowCompleteAllModal(false);
+    setCompleteAllCount(0);
   };
 
   const statCards = [
@@ -121,6 +178,38 @@ const DoctorDashboard = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Complete All Active Visits */}
+        <div className="card border-2 border-dashed border-red-200 bg-gradient-to-r from-red-50 to-orange-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg shadow-sm" style={{ backgroundColor: '#DC2626' }}>
+                <CheckCircle className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-medium" style={{ color: '#991B1B' }}>Complete All Active Visits</p>
+                <p className="text-xs" style={{ color: '#B91C1C' }}>Finish all your pending patients so they can be discharged or create new visits</p>
+              </div>
+            </div>
+            <button
+              onClick={handleCompleteAllClick}
+              disabled={fetchingCompleteCount}
+              className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl font-semibold text-sm hover:from-red-700 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex items-center gap-2"
+            >
+              {fetchingCompleteCount ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                  Checking...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4" />
+                  Complete All
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -202,6 +291,7 @@ const DoctorDashboard = () => {
                         <span className="text-sm" style={{ color: '#0C0E0B' }}>{activity.message}</span>
                       </div>
                       <span className="text-xs" style={{ color: '#2e13d1' }}>{timeAgo}</span>
+
                     </div>
                   );
                 })}
@@ -213,6 +303,61 @@ const DoctorDashboard = () => {
             )}
           </div>
         </div>
+        {/* Complete All Active Visits Modal */}
+        {showCompleteAllModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full relative shadow-2xl">
+              <button onClick={closeCompleteAllModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg" style={{ backgroundColor: '#FEE2E2' }}>
+                  <CheckCircle className="h-5 w-5" style={{ color: '#DC2626' }} />
+                </div>
+                <h3 className="text-lg font-semibold" style={{ color: '#0C0E0B' }}>Complete All Active Visits</h3>
+              </div>
+
+              <p className="text-sm mb-2" style={{ color: '#4B5563' }}>
+                You are about to complete <strong>{completeAllCount}</strong> active patient visit(s). This will move all your pending patients forward in the workflow.
+              </p>
+
+              <div className="rounded-lg p-3 mb-4" style={{ backgroundColor: '#FFF7ED', border: '1px solid #FED7AA' }}>
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#EA580C' }} />
+                  <p className="text-xs" style={{ color: '#9A3412' }}>
+                    This action cannot be undone. All pending consultations will be marked as completed.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={closeCompleteAllModal}
+                  disabled={completingAll}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmCompleteAll}
+                  disabled={completingAll}
+                  className="flex-1 px-4 py-2.5 text-white rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{ backgroundColor: '#DC2626' }}
+                >
+                  {completingAll ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                      Completing...
+                    </>
+                  ) : (
+                    'Confirm Complete'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

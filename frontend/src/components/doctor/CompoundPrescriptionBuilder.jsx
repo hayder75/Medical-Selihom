@@ -100,7 +100,7 @@ const CompoundPrescriptionBuilder = ({ visit, onSaved, onClose }) => {
 
       const payload = {
         visitId: visit.id,
-        patientId: visit.patient.id,
+        patientId: visit?.patient?.id || visit?.patientId,
         prescriptionText: formData.prescriptionText,
         rawText: formData.prescriptionText
       };
