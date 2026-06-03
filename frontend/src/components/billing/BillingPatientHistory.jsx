@@ -21,6 +21,16 @@ const BillingPatientHistory = () => {
   const [selectedVisitId, setSelectedVisitId] = useState(null);
   const [activeTab, setActiveTab] = useState('medications');
 
+  // Debounce auto-search on input change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm.trim()) {
+        searchPatients();
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const searchPatients = async () => {
     if (!searchTerm.trim()) return;
 

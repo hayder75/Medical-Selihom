@@ -34,12 +34,12 @@ exports.searchPatients = async (req, res) => {
     const { query, type } = req.query;
     console.log('🔍 Patient search request:', { query, type });
 
-    if (!query || query.trim().length < 2) {
-      return res.status(400).json({ error: 'Search query must be at least 2 characters long' });
+    if (!query || !query.trim()) {
+      return res.status(400).json({ error: 'Search query is required' });
     }
 
     const searchTerm = query.trim();
-    console.log('🔍 Search term:', searchTerm);
+    console.log('🔍 Search term:', searchTerm, 'length:', searchTerm.length);
 
     // For patient history search, don't filter by status to show all patients
     let whereClause = {};
@@ -56,89 +56,29 @@ exports.searchPatients = async (req, res) => {
         mode: 'insensitive'
       };
     } else {
-      // Default to name search or general search
-      // Search with multiple patterns to catch similar names and handle typos
-      const searchPatterns = [
-        { name: { contains: searchTerm, mode: 'insensitive' } },
-        { name: { startsWith: searchTerm, mode: 'insensitive' } },
-        { id: { contains: searchTerm, mode: 'insensitive' } },
-        { mobile: { contains: searchTerm, mode: 'insensitive' } }
-      ];
-
-      // If search term is 3+ characters, also try searching for similar patterns
-      // This helps with typos and similar spellings (e.g., "hayd" vs "hady", "test" vs "tets")
-      if (searchTerm.length >= 3) {
-        // Try searching with first 3 characters to catch similar names
-        const firstThree = searchTerm.substring(0, 3).toLowerCase();
-        searchPatterns.push({
-          name: {
-            contains: firstThree,
-            mode: 'insensitive'
-          }
-        });
-        searchPatterns.push({
-          name: {
-            startsWith: firstThree,
-            mode: 'insensitive'
-          }
-        });
-
-        // For 4+ character searches, try common character variations
-        // This handles cases like "hayd" vs "hady" or "test" vs "tets"
-        if (searchTerm.length >= 4) {
-          // Try variations by swapping last two characters or similar patterns
-          // For "hayd" (4 chars), also try "hady" (swapped last two)
-          const lastTwo = searchTerm.slice(-2).toLowerCase();
-          const swappedLastTwo = lastTwo.split('').reverse().join('');
-          const firstPart = searchTerm.substring(0, searchTerm.length - 2).toLowerCase();
-          const variation1 = firstPart + swappedLastTwo;
-
-          if (variation1 !== searchTerm.toLowerCase()) {
-            searchPatterns.push({
-              name: {
-                contains: variation1,
-                mode: 'insensitive'
-              }
-            });
-            searchPatterns.push({
-              name: {
-                startsWith: variation1,
-                mode: 'insensitive'
-              }
-            });
-          }
-
-          // Also try without the last character (for cases like "hayd" -> "hay")
-          if (searchTerm.length > 4) {
-            const withoutLast = searchTerm.substring(0, searchTerm.length - 1).toLowerCase();
-            searchPatterns.push({
-              name: {
-                contains: withoutLast,
-                mode: 'insensitive'
-              }
-            });
-            searchPatterns.push({
-              name: {
-                startsWith: withoutLast,
-                mode: 'insensitive'
-              }
-            });
-          }
-        }
+      // Default general search
+      // For 1 character: only match name startsWith (to show names starting with that letter)
+      // For 2+ characters: startsWith + contains on name, contains on id and mobile
+      if (searchTerm.length === 1) {
+        whereClause.OR = [
+          { name: { startsWith: searchTerm, mode: 'insensitive' } }
+        ];
+      } else {
+        whereClause.OR = [
+          { name: { startsWith: searchTerm, mode: 'insensitive' } },
+          { name: { contains: searchTerm, mode: 'insensitive' } },
+          { id: { contains: searchTerm, mode: 'insensitive' } },
+          { mobile: { contains: searchTerm, mode: 'insensitive' } }
+        ];
       }
-
-      whereClause.OR = searchPatterns;
     }
 
     // Search patients directly - include all patients for history search (no status filter)
-    // Remove status from whereClause if it exists
     const searchWhereClause = { ...whereClause };
     delete searchWhereClause.status;
 
     console.log('🔍 Search whereClause:', JSON.stringify(searchWhereClause, null, 2));
 
-    // Use raw SQL for more flexible name matching (handles trailing spaces)
-    // First try Prisma query
     let patients = await prisma.patient.findMany({
       where: searchWhereClause,
       select: {
@@ -161,15 +101,12 @@ exports.searchPatients = async (req, res) => {
     });
 
     // If no results and we're searching by name, try raw SQL with trimmed names
-    // This handles trailing spaces in patient names and similar spellings
-    if (patients.length === 0 && searchTerm.length >= 2) {
+    // This handles trailing spaces in patient names
+    if (patients.length === 0 && searchTerm.length >= 1) {
       console.log('🔍 No results with Prisma, trying raw SQL with trimmed names...');
       try {
         const searchPattern = `%${searchTerm}%`;
         const searchPatternStart = `${searchTerm}%`;
-        const firstThree = searchTerm.length >= 3 ? searchTerm.substring(0, 3) : null;
-        const firstThreePattern = firstThree ? `%${firstThree}%` : null;
-        const firstThreeStart = firstThree ? `${firstThree}%` : null;
 
         let rawQuery = `
           SELECT id, name, type, mobile, email, "dob", gender, "bloodType", status, "cardStatus", "cardActivatedAt", "cardExpiryDate", "createdAt"
@@ -181,30 +118,6 @@ exports.searchPatients = async (req, res) => {
             OR LOWER(mobile) LIKE LOWER($1)
         `;
         const params = [searchPattern, searchPatternStart];
-
-        if (firstThreePattern) {
-          rawQuery += ` OR LOWER(TRIM(name)) LIKE LOWER($${params.length + 1})`;
-          params.push(firstThreePattern);
-        }
-        if (firstThreeStart) {
-          rawQuery += ` OR LOWER(TRIM(name)) LIKE LOWER($${params.length + 1})`;
-          params.push(firstThreeStart);
-        }
-
-        // For 4+ character searches, try variations (e.g., "hayd" vs "hady", "test" vs "tets")
-        if (searchTerm.length >= 4) {
-          const lastTwo = searchTerm.slice(-2).toLowerCase();
-          const swappedLastTwo = lastTwo.split('').reverse().join('');
-          const firstPart = searchTerm.substring(0, searchTerm.length - 2).toLowerCase();
-          const variation1 = firstPart + swappedLastTwo;
-
-          if (variation1 !== searchTerm.toLowerCase()) {
-            rawQuery += ` OR LOWER(TRIM(name)) LIKE LOWER($${params.length + 1})`;
-            params.push(`%${variation1}%`);
-            rawQuery += ` OR LOWER(TRIM(name)) LIKE LOWER($${params.length + 1})`;
-            params.push(`${variation1}%`);
-          }
-        }
 
         rawQuery += ` ORDER BY name ASC LIMIT 20`;
 

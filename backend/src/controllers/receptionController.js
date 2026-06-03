@@ -128,11 +128,17 @@ exports.getPatients = async (req, res) => {
     const where = {};
 
     if (search) {
-      where.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
-        { name: { contains: search, mode: 'insensitive' } },
-        { mobile: { contains: search, mode: 'insensitive' } }
-      ];
+      if (search.trim().length === 1) {
+        where.OR = [
+          { name: { startsWith: search.trim(), mode: 'insensitive' } }
+        ];
+      } else {
+        where.OR = [
+          { id: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: 'insensitive' } },
+          { mobile: { contains: search, mode: 'insensitive' } }
+        ];
+      }
     }
 
     if (cardStatus) {

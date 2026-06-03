@@ -327,7 +327,7 @@ const AccountModal = ({ account, type, onClose }) => {
 
   // Search patients
   const searchPatients = async () => {
-    if (formData.searchPatient.trim().length < 2) {
+    if (formData.searchPatient.trim().length < 1) {
       setPatients([]);
       return;
     }
@@ -355,7 +355,7 @@ const AccountModal = ({ account, type, onClose }) => {
   useEffect(() => {
     const delaySearch = setTimeout(() => {
       // Only search if user typed at least 2 chars AND hasn't selected a patient yet
-      if (type === 'create' && formData.searchPatient.trim().length >= 2 && !formData.patientId) {
+      if (type === 'create' && formData.searchPatient.trim().length >= 1 && !formData.patientId) {
         searchPatients();
       } else {
         setPatients([]);

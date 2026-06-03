@@ -152,6 +152,16 @@ const ReceptionPatientRegistration = () => {
   };
 
   // Search for existing patients
+  // Debounce auto-search on input change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchPatients();
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const searchPatients = async () => {
     if (!searchQuery.trim() || searchQuery.length < 2) {
       toast.error('Please enter at least 2 characters to search');
