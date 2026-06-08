@@ -1,0 +1,11 @@
+{
+  "fullname": "System Administrator",
+  "username": "admin",
+  "password": "$2a$10$WamXFWT2PCfTwY5hMizK3eWjoWbwRFbveP65r4dx2sXW75qkBnrOC",
+  "role": "ADMIN",
+  "email": "admin@medicalclinic.com",
+  "phone": "0000000000",
+  "qualifications": [],
+  "licenseNumber": null,
+  "isActive": true
+}

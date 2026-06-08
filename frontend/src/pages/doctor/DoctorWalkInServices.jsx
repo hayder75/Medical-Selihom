@@ -273,9 +273,9 @@ const WalkInNurseOrders = () => {
         <body>
           <div class="header">
             <div class="header-left">
-              <img src="/clinic-logo.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+              <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
               <div class="clinic-info">
-                <h1 class="clinic-name">Charite Medium Clinic</h1>
+                <h1 class="clinic-name">Selihom Medical Clinic</h1>
                 <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
               </div>
             </div>
@@ -356,7 +356,7 @@ const WalkInNurseOrders = () => {
           </div>
 
           <div class="print-footer">
-            Charite Medium Clinic - Generated on ${new Date().toLocaleString()}
+            Selihom Medical Clinic - Generated on ${new Date().toLocaleString()}
           </div>
         </body>
       </html>

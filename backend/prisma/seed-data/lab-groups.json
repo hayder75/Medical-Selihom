@@ -1,0 +1,1227 @@
+[
+  {
+    "name": "Complete Blood Count (CBC)",
+    "category": "Hematology",
+    "description": "Complete blood count panel",
+    "displayOrder": 1,
+    "isActive": false,
+    "labTests": [
+      {
+        "name": "Hematocrit (HCT)",
+        "code": "HCT001",
+        "category": "Hematology",
+        "description": "Hematocrit (HCT) test",
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 2,
+        "isActive": false,
+        "resultFields": []
+      },
+      {
+        "name": "Hemoglobin (Hb)",
+        "code": "HB001",
+        "category": "Hematology",
+        "description": null,
+        "price": 50,
+        "unit": "UNIT",
+        "displayOrder": 1,
+        "isActive": false,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Hemoglobin (g/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "g/dL",
+            "normalRange": "M: 13.5–17.5, F: 12.0–15.5"
+          }
+        ]
+      },
+      {
+        "name": "Platelet Count",
+        "code": "PLT001",
+        "category": "Hematology",
+        "description": null,
+        "price": 50,
+        "unit": "UNIT",
+        "displayOrder": 5,
+        "isActive": false,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Platelet Count (/µL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "/µL",
+            "normalRange": "150,000–450,000"
+          }
+        ]
+      },
+      {
+        "name": "RBC Count",
+        "code": "RBC001",
+        "category": "Hematology",
+        "description": "RBC Count test",
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 3,
+        "isActive": false,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "RBC Count (million/µL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "million/µL",
+            "normalRange": "M: 4.5–5.9, F: 4.1–5.1"
+          }
+        ]
+      },
+      {
+        "name": "Red Cell Indices (MCV, MCH, MCHC)",
+        "code": "RCI001",
+        "category": "Hematology",
+        "description": null,
+        "price": 100,
+        "unit": "UNIT",
+        "displayOrder": 6,
+        "isActive": false,
+        "resultFields": [
+          {
+            "fieldName": "mcv",
+            "label": "MCV (fL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "fL",
+            "normalRange": "80–100"
+          },
+          {
+            "fieldName": "mch",
+            "label": "MCH (pg)",
+            "fieldType": "number",
+            "displayOrder": 2,
+            "isRequired": true,
+            "options": null,
+            "unit": "pg",
+            "normalRange": "27–31"
+          },
+          {
+            "fieldName": "mchc",
+            "label": "MCHC (g/dL)",
+            "fieldType": "number",
+            "displayOrder": 3,
+            "isRequired": true,
+            "options": null,
+            "unit": "g/dL",
+            "normalRange": "32–36"
+          }
+        ]
+      },
+      {
+        "name": "WBC Count",
+        "code": "WBC001",
+        "category": "Hematology",
+        "description": null,
+        "price": 50,
+        "unit": "UNIT",
+        "displayOrder": 4,
+        "isActive": false,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "WBC Count (/µL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "/µL",
+            "normalRange": "4,000–11,000"
+          }
+        ]
+      },
+      {
+        "name": "WBC Differential",
+        "code": "WBCD001",
+        "category": "Hematology",
+        "description": null,
+        "price": 50,
+        "unit": "UNIT",
+        "displayOrder": 7,
+        "isActive": false,
+        "resultFields": [
+          {
+            "fieldName": "neutrophils",
+            "label": "Neutrophils (%)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "%",
+            "normalRange": "40–70"
+          },
+          {
+            "fieldName": "lymphocytes",
+            "label": "Lymphocytes (%)",
+            "fieldType": "number",
+            "displayOrder": 2,
+            "isRequired": true,
+            "options": null,
+            "unit": "%",
+            "normalRange": "20–40"
+          },
+          {
+            "fieldName": "monocytes",
+            "label": "Monocytes (%)",
+            "fieldType": "number",
+            "displayOrder": 3,
+            "isRequired": true,
+            "options": null,
+            "unit": "%",
+            "normalRange": "2–8"
+          },
+          {
+            "fieldName": "eosinophils",
+            "label": "Eosinophils (%)",
+            "fieldType": "number",
+            "displayOrder": 4,
+            "isRequired": true,
+            "options": null,
+            "unit": "%",
+            "normalRange": "1–4"
+          },
+          {
+            "fieldName": "basophils",
+            "label": "Basophils (%)",
+            "fieldType": "number",
+            "displayOrder": 5,
+            "isRequired": true,
+            "options": null,
+            "unit": "%",
+            "normalRange": "0.5–1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Liver Function Tests (LFT)",
+    "category": "Blood Chemistry",
+    "description": "Liver function panel",
+    "displayOrder": 1,
+    "isActive": true,
+    "labTests": [
+      {
+        "name": "ALP",
+        "code": "ALP001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 300,
+        "unit": "UNIT",
+        "displayOrder": 3,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "ALP (U/L)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "U/L",
+            "normalRange": "44–147"
+          }
+        ]
+      },
+      {
+        "name": "ALT",
+        "code": "ALT001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 40,
+        "unit": "UNIT",
+        "displayOrder": 1,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "ALT (U/L)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "U/L",
+            "normalRange": "7–56"
+          }
+        ]
+      },
+      {
+        "name": "AST",
+        "code": "AST001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 2,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "AST (U/L)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "U/L",
+            "normalRange": "10–40"
+          }
+        ]
+      },
+      {
+        "name": "Albumin",
+        "code": "ALB001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 7,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Albumin (g/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "g/dL",
+            "normalRange": "3.5–5.0"
+          }
+        ]
+      },
+      {
+        "name": "Direct Bilirubin",
+        "code": "DBIL001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 5,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Direct Bilirubin (mg/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mg/dL",
+            "normalRange": "0.0–0.3"
+          }
+        ]
+      },
+      {
+        "name": "Total Bilirubin",
+        "code": "TBIL001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 4,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Total Bilirubin (mg/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mg/dL",
+            "normalRange": "0.1–1.2"
+          }
+        ]
+      },
+      {
+        "name": "Total Protein",
+        "code": "TP001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 6,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Total Protein (g/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "g/dL",
+            "normalRange": "6.0–8.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Serology Panel",
+    "category": "Serology",
+    "description": "Infectious disease markers panel",
+    "displayOrder": 1,
+    "isActive": true,
+    "labTests": [
+      {
+        "name": "ASO Titer",
+        "code": "ASO001",
+        "category": "Serology",
+        "description": null,
+        "price": 50,
+        "unit": "UNIT",
+        "displayOrder": 7,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "ASO Titer (IU/mL)",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": "[\"Reactive\",\"Non-reactive\"]",
+            "unit": "IU/mL",
+            "normalRange": "<200"
+          }
+        ]
+      },
+      {
+        "name": "H. pylori Antibody (Serology)",
+        "code": "HPYLORIAB001",
+        "category": "Serology",
+        "description": "H. pylori antibody serology test",
+        "price": 250,
+        "unit": "UNIT",
+        "displayOrder": 0,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 2,
+            "isRequired": true,
+            "options": [
+              "Negative",
+              "Positive",
+              "Strongly Reactive"
+            ],
+            "unit": null,
+            "normalRange": "Negative"
+          },
+          {
+            "fieldName": "remarks",
+            "label": "Remarks",
+            "fieldType": "textarea",
+            "displayOrder": 3,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "H. pylori Antigen (Stool Test)",
+        "code": "HPYLORIAG001",
+        "category": "Serology",
+        "description": "H. pylori Antigen detection in stool sample",
+        "price": 250,
+        "unit": "UNIT",
+        "displayOrder": 0,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "sample_type",
+            "label": "Sample Type",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": "[\"Stool\"]",
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 2,
+            "isRequired": true,
+            "options": "[\"Negative\",\"Positive\",\"Strongly Reactive\"]",
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "remarks",
+            "label": "Remarks",
+            "fieldType": "textarea",
+            "displayOrder": 3,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "H. pylori Urea Breath Test",
+        "code": "HPYLORIBUT001",
+        "category": "Serology",
+        "description": "Urea breath test for H. pylori (13C/14C)",
+        "price": 250,
+        "unit": "UNIT",
+        "displayOrder": 0,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "method",
+            "label": "Test Method",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "13C Urea Breath Test",
+              "14C Urea Breath Test"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "preparation",
+            "label": "Patient Preparation",
+            "fieldType": "select",
+            "displayOrder": 2,
+            "isRequired": true,
+            "options": [
+              "Fasting Confirmed",
+              "Not Confirmed"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "baseline",
+            "label": "Baseline Breath Sample",
+            "fieldType": "select",
+            "displayOrder": 3,
+            "isRequired": true,
+            "options": [
+              "Collected",
+              "Not Collected"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "post_sample",
+            "label": "Post-Urea Breath Sample",
+            "fieldType": "select",
+            "displayOrder": 4,
+            "isRequired": true,
+            "options": [
+              "Collected",
+              "Not Collected"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 5,
+            "isRequired": true,
+            "options": [
+              "Positive",
+              "Negative",
+              "Indeterminate"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "validity",
+            "label": "Test Validity",
+            "fieldType": "select",
+            "displayOrder": 6,
+            "isRequired": true,
+            "options": [
+              "Valid",
+              "Invalid"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "technician_comment",
+            "label": "Technician Comment",
+            "fieldType": "textarea",
+            "displayOrder": 7,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "HBsAg",
+        "code": "HBSAG001",
+        "category": "Serology",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 3,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Negative",
+              "Positive"
+            ],
+            "unit": null,
+            "normalRange": "Negative"
+          },
+          {
+            "fieldName": "remarks",
+            "label": "Remarks",
+            "fieldType": "textarea",
+            "displayOrder": 2,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "HCG (Qualitative)",
+        "code": "HCG001",
+        "category": "Serology",
+        "description": "HCG (Qualitative) test",
+        "price": 100,
+        "unit": "UNIT",
+        "displayOrder": 5,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Positive",
+              "Negative"
+            ],
+            "unit": null,
+            "normalRange": "Negative"
+          },
+          {
+            "fieldName": "remarks",
+            "label": "Remarks",
+            "fieldType": "textarea",
+            "displayOrder": 2,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "HCG (Quantitative)",
+        "code": "HCG002",
+        "category": "Serology",
+        "description": "HCG (Quantitative) test",
+        "price": 100,
+        "unit": "UNIT",
+        "displayOrder": 12,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Positive",
+              "Negative"
+            ],
+            "unit": null,
+            "normalRange": "Negative"
+          },
+          {
+            "fieldName": "remarks",
+            "label": "Remarks",
+            "fieldType": "textarea",
+            "displayOrder": 2,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "HCV Antibody",
+        "code": "HCV001",
+        "category": "Serology",
+        "description": null,
+        "price": 150,
+        "unit": "UNIT",
+        "displayOrder": 8,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Negative (-ve)",
+              "Positive (+ve)"
+            ],
+            "unit": null,
+            "normalRange": "Negative (-ve)"
+          },
+          {
+            "fieldName": "remarks",
+            "label": "Remarks",
+            "fieldType": "textarea",
+            "displayOrder": 2,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "HIV Test ",
+        "code": "HIV001",
+        "category": "Serology",
+        "description": null,
+        "price": 300,
+        "unit": "UNIT",
+        "displayOrder": 4,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": "[\"Negative\",\"Positive\"]",
+            "unit": null,
+            "normalRange": "Non-Reactive"
+          },
+          {
+            "fieldName": "remarks",
+            "label": "Remarks (only if Reactive)",
+            "fieldType": "textarea",
+            "displayOrder": 2,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "RPR",
+        "code": "RPR001",
+        "category": "Serology",
+        "description": null,
+        "price": 150,
+        "unit": "UNIT",
+        "displayOrder": 2,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Non-reactive",
+              "Strongly Reactive",
+              "Reactive"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "titer",
+            "label": "Titer",
+            "fieldType": "text",
+            "displayOrder": 2,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "RTD (Rapid Test Device)",
+        "code": "RTD001",
+        "category": "Serology",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 13,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "testType",
+            "label": "Test Type",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Malaria",
+              "HIV",
+              "COVID-19",
+              "Strep",
+              "Other"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 2,
+            "isRequired": true,
+            "options": [
+              "Positive",
+              "Negative",
+              "Invalid"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "notes",
+            "label": "Notes",
+            "fieldType": "textarea",
+            "displayOrder": 3,
+            "isRequired": false,
+            "options": null,
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "Rheumatoid Factor (RF)",
+        "code": "RF001",
+        "category": "Serology",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 6,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "RF",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Negative",
+              "Positive"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "titer",
+            "label": "Titer (IU/mL)",
+            "fieldType": "number",
+            "displayOrder": 2,
+            "isRequired": false,
+            "options": null,
+            "unit": "IU/mL",
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "VDRL",
+        "code": "VDRL001",
+        "category": "Serology",
+        "description": "VDRL test",
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 9,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Negative",
+              "Positive"
+            ],
+            "unit": null,
+            "normalRange": null
+          },
+          {
+            "fieldName": "titer",
+            "label": "Titer (if Positive)",
+            "fieldType": "select",
+            "displayOrder": 2,
+            "isRequired": false,
+            "options": [
+              "Reactive",
+              "Non-Reactive"
+            ],
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "Weil-Felix Test",
+        "code": "WEIL001",
+        "category": "Serology",
+        "description": null,
+        "price": 100,
+        "unit": "UNIT",
+        "displayOrder": 11,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Reactive",
+              "Non-reactive",
+              "Strong Reactive"
+            ],
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      },
+      {
+        "name": "Widal Test",
+        "code": "WIDAL001",
+        "category": "Serology",
+        "description": null,
+        "price": 100,
+        "unit": "UNIT",
+        "displayOrder": 1,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "result",
+            "label": "Result",
+            "fieldType": "select",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": [
+              "Reactive",
+              "Non-reactive",
+              "Strong Reactive"
+            ],
+            "unit": null,
+            "normalRange": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Kidney Function Tests (KFT)",
+    "category": "Blood Chemistry",
+    "description": "Kidney function panel",
+    "displayOrder": 2,
+    "isActive": true,
+    "labTests": [
+      {
+        "name": "BUN",
+        "code": "BUN001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 2,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "BUN (mg/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mg/dL",
+            "normalRange": "7–20"
+          }
+        ]
+      },
+      {
+        "name": "Creatinine",
+        "code": "CREA001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 1,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Creatinine (mg/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mg/dL",
+            "normalRange": "M: 0.7–1.3, F: 0.6–1.1"
+          }
+        ]
+      },
+      {
+        "name": "Uric Acid",
+        "code": "UA001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 3,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Uric Acid (mg/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mg/dL",
+            "normalRange": "M: 3.4–7.0, F: 2.4–6.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Lipid Profile",
+    "category": "Blood Chemistry",
+    "description": "Lipid panel",
+    "displayOrder": 3,
+    "isActive": true,
+    "labTests": [
+      {
+        "name": "HDL Cholesterol",
+        "code": "HDL001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 500,
+        "unit": "UNIT",
+        "displayOrder": 2,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "HDL (mg/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mg/dL",
+            "normalRange": "M: >40, F: >50"
+          }
+        ]
+      },
+      {
+        "name": "LDL Cholesterol",
+        "code": "LDL001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 500,
+        "unit": "UNIT",
+        "displayOrder": 3,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "LDL (mg/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mg/dL",
+            "normalRange": "<100"
+          }
+        ]
+      },
+      {
+        "name": "Total Cholesterol",
+        "code": "CHOL001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 1,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Total Cholesterol (mg/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mg/dL",
+            "normalRange": "<200"
+          }
+        ]
+      },
+      {
+        "name": "Triglycerides",
+        "code": "TG001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 200,
+        "unit": "UNIT",
+        "displayOrder": 4,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Triglycerides (mg/dL)",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mg/dL",
+            "normalRange": "<150"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Thyroid Function Tests",
+    "category": "Blood Chemistry",
+    "description": "Complete thyroid hormone panel",
+    "displayOrder": 4,
+    "isActive": true,
+    "labTests": [
+      {
+        "name": "Free T3 (Triiodothyronine)",
+        "code": "FT3001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 1000,
+        "unit": "UNIT",
+        "displayOrder": 2,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Free T3",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "pg/mL",
+            "normalRange": "2.3-4.2 pg/mL (or 3.5-6.5 pmol/L)"
+          }
+        ]
+      },
+      {
+        "name": "Free T4 (Thyroxine)",
+        "code": "FT4001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 1000,
+        "unit": "UNIT",
+        "displayOrder": 3,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "Free T4",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "ng/dL",
+            "normalRange": "0.8-1.8 ng/dL (or 10-23 pmol/L)"
+          }
+        ]
+      },
+      {
+        "name": "TSH (Thyroid Stimulating Hormone)",
+        "code": "TSH001",
+        "category": "Blood Chemistry",
+        "description": null,
+        "price": 1000,
+        "unit": "UNIT",
+        "displayOrder": 1,
+        "isActive": true,
+        "resultFields": [
+          {
+            "fieldName": "value",
+            "label": "TSH",
+            "fieldType": "number",
+            "displayOrder": 1,
+            "isRequired": true,
+            "options": null,
+            "unit": "mIU/L",
+            "normalRange": "0.4-4.0 mIU/L (varies by lab, age, pregnancy)"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Microbiology",
+    "category": "Microbiology",
+    "description": "Microbiology tests",
+    "displayOrder": 10,
+    "isActive": true,
+    "labTests": []
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Ethiopian Insurance Corporation",
+    "code": "EIC001",
+    "contactInfo": "Insurance Manager - +251-11-123-4567 - insurance@ethioinsurance.com - Addis Ababa, Ethiopia",
+    "isActive": true
+  },
+  {
+    "name": "Test Insurance",
+    "code": "TEST001",
+    "contactInfo": "Test Manager - +251-11-987-6543 - test@testinsurance.et - Addis Ababa, Ethiopia",
+    "isActive": true
+  }
+]

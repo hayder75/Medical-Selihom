@@ -535,9 +535,9 @@ const DailyCashManagement = () => {
           <div class="receipt-container">
             <div class="header">
               <div class="header-left">
-                <img src="/clinic-logo.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+                <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
                 <div class="clinic-info">
-                  <h1 class="clinic-name">Charite Medium Clinic</h1>
+                  <h1 class="clinic-name">Selihom Medical Clinic</h1>
                   <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
                 </div>
               </div>
@@ -578,7 +578,7 @@ const DailyCashManagement = () => {
             </div>
 
             <div class="print-footer">
-              Charite Medium Clinic - Generated on ${new Date().toLocaleString()}
+              Selihom Medical Clinic - Generated on ${new Date().toLocaleString()}
             </div>
           </div>
         </body>
@@ -657,7 +657,7 @@ const DailyCashManagement = () => {
         </head>
         <body>
           <div class="header">
-            <div class="clinic-name">Charite Medium Clinic</div>
+            <div class="clinic-name">Selihom Medical Clinic</div>
             <div class="report-title">Daily Cash Transactions Report</div>
             <div>Date: ${selectedDate ? new Date(selectedDate).toLocaleDateString() : new Date().toLocaleDateString()}</div>
             <div>Generated: ${new Date().toLocaleString()}</div>
@@ -701,7 +701,7 @@ const DailyCashManagement = () => {
               <div style="font-size: 11px;">Date: _________________________</div>
             </div>
             <div style="text-align: center; font-size: 10px; color: #666; margin-top: 20px;">
-              <div>Charite Medium Clinic</div>
+              <div>Selihom Medical Clinic</div>
             </div>
           </div>
         </body>
@@ -1178,7 +1178,7 @@ const DailyCashManagement = () => {
                         step="0.01"
                         value={depositForm.amount}
                         onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-lg"
                         required
                       />
                     </div>
@@ -1188,7 +1188,7 @@ const DailyCashManagement = () => {
                       <BankMethodSelect
                         value={depositForm.bankName}
                         onChange={(e) => setDepositForm({ ...depositForm, bankName: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-lg"
                         required
                       />
                     </div>
@@ -1199,7 +1199,7 @@ const DailyCashManagement = () => {
                         type="text"
                         value={depositForm.accountNumber}
                         onChange={(e) => setDepositForm({ ...depositForm, accountNumber: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-lg"
                       />
                     </div>
 
@@ -1209,7 +1209,7 @@ const DailyCashManagement = () => {
                         type="text"
                         value={depositForm.transactionNumber}
                         onChange={(e) => setDepositForm({ ...depositForm, transactionNumber: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-lg"
                       />
                     </div>
 
@@ -1219,7 +1219,7 @@ const DailyCashManagement = () => {
                         value={depositForm.notes}
                         onChange={(e) => setDepositForm({ ...depositForm, notes: e.target.value })}
                         rows={3}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-lg"
                       />
                     </div>
 
@@ -1280,7 +1280,7 @@ const DailyCashManagement = () => {
                         step="0.01"
                         value={expenseForm.amount}
                         onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-lg"
                         required
                       />
                     </div>
@@ -1290,7 +1290,7 @@ const DailyCashManagement = () => {
                       <select
                         value={expenseForm.category}
                         onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-lg"
                       >
                         <option value="OFFICE_SUPPLIES">Office Supplies</option>
                         <option value="MEDICAL_SUPPLIES">Medical Supplies</option>
@@ -1308,7 +1308,7 @@ const DailyCashManagement = () => {
                         type="text"
                         value={expenseForm.description}
                         onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-lg"
                         required
                       />
                     </div>
@@ -1319,7 +1319,7 @@ const DailyCashManagement = () => {
                         type="text"
                         value={expenseForm.vendor}
                         onChange={(e) => setExpenseForm({ ...expenseForm, vendor: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-lg"
                       />
                     </div>
 

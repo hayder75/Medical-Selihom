@@ -1,0 +1,1073 @@
+[
+  {
+    "name": "AFB Sputum (Spot–Morning–Spot)",
+    "code": "AFB001",
+    "category": "Microbiology",
+    "description": "Acid-Fast Bacilli Sputum Examination - Three samples (Spot-Morning-Spot)",
+    "price": 300,
+    "unit": "UNIT",
+    "displayOrder": 1,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "afb_result_first_spot",
+        "label": "AFB Result (First Spot)",
+        "fieldType": "select",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": [
+          "Negative",
+          "Scanty",
+          "1+",
+          "2+",
+          "3+"
+        ],
+        "unit": null,
+        "normalRange": "Negative"
+      },
+      {
+        "fieldName": "afb_count_first_spot",
+        "label": "AFB Count (First Spot)",
+        "fieldType": "text",
+        "displayOrder": 2,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "afb_result_morning",
+        "label": "AFB Result (Morning)",
+        "fieldType": "select",
+        "displayOrder": 3,
+        "isRequired": true,
+        "options": [
+          "Negative",
+          "Scanty",
+          "1+",
+          "2+",
+          "3+"
+        ],
+        "unit": null,
+        "normalRange": "Negative"
+      },
+      {
+        "fieldName": "afb_count_morning",
+        "label": "AFB Count (Morning)",
+        "fieldType": "text",
+        "displayOrder": 4,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "afb_result_second_spot",
+        "label": "AFB Result (Second Spot)",
+        "fieldType": "select",
+        "displayOrder": 5,
+        "isRequired": true,
+        "options": [
+          "Negative",
+          "Scanty",
+          "1+",
+          "2+",
+          "3+"
+        ],
+        "unit": null,
+        "normalRange": "Negative"
+      },
+      {
+        "fieldName": "afb_count_second_spot",
+        "label": "AFB Count (Second Spot)",
+        "fieldType": "text",
+        "displayOrder": 6,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "final_comment",
+        "label": "Final Comment / Remarks",
+        "fieldType": "textarea",
+        "displayOrder": 7,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      }
+    ]
+  },
+  {
+    "name": "Bleeding Time (BT)",
+    "code": "BT001",
+    "category": "Hematology",
+    "description": null,
+    "price": 300,
+    "unit": "UNIT",
+    "displayOrder": 11,
+    "isActive": false,
+    "resultFields": [
+      {
+        "fieldName": "value",
+        "label": "Bleeding Time (minutes)",
+        "fieldType": "number",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": null,
+        "unit": "min",
+        "normalRange": "2–9"
+      }
+    ]
+  },
+  {
+    "name": "Blood Film",
+    "code": "PBF001",
+    "category": "Hematology",
+    "description": null,
+    "price": 150,
+    "unit": "UNIT",
+    "displayOrder": 13,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "rbc_morphology",
+        "label": "RBC Morphology",
+        "fieldType": "select",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": [
+          "Normocytic normochromic",
+          "Microcytic hypochromic",
+          "Macrocytic",
+          "Anisopoikilocytosis",
+          "Sickle cells seen",
+          "Target cells seen",
+          "Other (free text)"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "wbc_morphology",
+        "label": "WBC Morphology",
+        "fieldType": "select",
+        "displayOrder": 2,
+        "isRequired": true,
+        "options": [
+          "Normal morphology",
+          "Left shift",
+          "Blast cells seen",
+          "Atypical lymphocytes",
+          "Other (free text)"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "platelets",
+        "label": "Platelets",
+        "fieldType": "select",
+        "displayOrder": 3,
+        "isRequired": true,
+        "options": [
+          "Adequate",
+          "Decreased",
+          "Increased"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "hemoparasite",
+        "label": "Hemoparasite",
+        "fieldType": "select",
+        "displayOrder": 4,
+        "isRequired": true,
+        "options": "[\"Hemoparasite Seen\",\"No Hemoparasite Seen\"]",
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "malaria_parasite",
+        "label": "Malaria Parasite",
+        "fieldType": "select",
+        "displayOrder": 5,
+        "isRequired": false,
+        "options": [
+          "No H/P Seen",
+          "P. falciparum",
+          "P. vivax",
+          "P. malariae",
+          "P. ovale",
+          "Mixed"
+        ],
+        "unit": null,
+        "normalRange": null
+      }
+    ]
+  },
+  {
+    "name": "Blood Film (BF)",
+    "code": "PICT001",
+    "category": "Hematology",
+    "description": null,
+    "price": 150,
+    "unit": "UNIT",
+    "displayOrder": 10,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "result",
+        "label": "Result",
+        "fieldType": "select",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": [
+          "Hemoparasite Seen",
+          "No Hemoparasite seen"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "species",
+        "label": "Species (if Hemoparasite Seen)",
+        "fieldType": "multiselect",
+        "displayOrder": 2,
+        "isRequired": false,
+        "options": [
+          "Plasmodium falciparum",
+          "Plasmodium vivax",
+          "Plasmodium ovale",
+          "Plasmodium malariae",
+          "Mixed infection",
+          "Species not identified"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "remark",
+        "label": "Remark",
+        "fieldType": "textarea",
+        "displayOrder": 4,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      }
+    ]
+  },
+  {
+    "name": "Blood Group & Rh",
+    "code": "BGRH001",
+    "category": "Hematology",
+    "description": "Blood Group & Rh test",
+    "price": 200,
+    "unit": "UNIT",
+    "displayOrder": 9,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "bloodGroup",
+        "label": "Blood Group",
+        "fieldType": "select",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": [
+          "A",
+          "B",
+          "AB",
+          "O"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "rh",
+        "label": "Rh Factor",
+        "fieldType": "select",
+        "displayOrder": 2,
+        "isRequired": true,
+        "options": [
+          "Positive",
+          "Negative"
+        ],
+        "unit": null,
+        "normalRange": null
+      }
+    ]
+  },
+  {
+    "name": "Clotting Time (CT)",
+    "code": "CT001",
+    "category": "Hematology",
+    "description": null,
+    "price": 30,
+    "unit": "UNIT",
+    "displayOrder": 12,
+    "isActive": false,
+    "resultFields": [
+      {
+        "fieldName": "value",
+        "label": "Clotting Time (minutes)",
+        "fieldType": "number",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": null,
+        "unit": "min",
+        "normalRange": "2–8"
+      }
+    ]
+  },
+  {
+    "name": "Complete Blood Count (CBC)",
+    "code": "CBC001",
+    "category": "Hematology",
+    "description": "Complete Blood Count (CBC) - Comprehensive hematology panel including Hemoglobin, Hematocrit, RBC, WBC, Platelets, Indices, and Differential",
+    "price": 400,
+    "unit": "UNIT",
+    "displayOrder": 0,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "wbc",
+        "label": "WBC",
+        "fieldType": "number",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": null,
+        "unit": "x10^3/uL",
+        "normalRange": "4.5-11.0"
+      },
+      {
+        "fieldName": "lymph_abs",
+        "label": "Lymph#",
+        "fieldType": "number",
+        "displayOrder": 2,
+        "isRequired": true,
+        "options": null,
+        "unit": "x10^3/uL",
+        "normalRange": null
+      },
+      {
+        "fieldName": "mid_abs",
+        "label": "Mid#",
+        "fieldType": "number",
+        "displayOrder": 3,
+        "isRequired": true,
+        "options": null,
+        "unit": "x10^3/uL",
+        "normalRange": null
+      },
+      {
+        "fieldName": "gran_abs",
+        "label": "Gran#",
+        "fieldType": "number",
+        "displayOrder": 4,
+        "isRequired": true,
+        "options": null,
+        "unit": "x10^3/uL",
+        "normalRange": null
+      },
+      {
+        "fieldName": "lymph_pct",
+        "label": "Lymph%",
+        "fieldType": "number",
+        "displayOrder": 5,
+        "isRequired": true,
+        "options": null,
+        "unit": "%",
+        "normalRange": null
+      },
+      {
+        "fieldName": "mid_pct",
+        "label": "Mid%",
+        "fieldType": "number",
+        "displayOrder": 6,
+        "isRequired": true,
+        "options": null,
+        "unit": "%",
+        "normalRange": null
+      },
+      {
+        "fieldName": "gran_pct",
+        "label": "Gran%",
+        "fieldType": "number",
+        "displayOrder": 7,
+        "isRequired": true,
+        "options": null,
+        "unit": "%",
+        "normalRange": null
+      },
+      {
+        "fieldName": "hgb",
+        "label": "HGB",
+        "fieldType": "number",
+        "displayOrder": 8,
+        "isRequired": true,
+        "options": null,
+        "unit": "g/dL",
+        "normalRange": null
+      },
+      {
+        "fieldName": "rbc",
+        "label": "RBC",
+        "fieldType": "number",
+        "displayOrder": 9,
+        "isRequired": true,
+        "options": null,
+        "unit": "x10^6/uL",
+        "normalRange": "4.2-6.1"
+      },
+      {
+        "fieldName": "hct",
+        "label": "HCT",
+        "fieldType": "number",
+        "displayOrder": 10,
+        "isRequired": true,
+        "options": null,
+        "unit": "%",
+        "normalRange": null
+      },
+      {
+        "fieldName": "mcv",
+        "label": "MCV",
+        "fieldType": "number",
+        "displayOrder": 11,
+        "isRequired": true,
+        "options": null,
+        "unit": "fL",
+        "normalRange": "80-100"
+      },
+      {
+        "fieldName": "mch",
+        "label": "MCH",
+        "fieldType": "number",
+        "displayOrder": 12,
+        "isRequired": true,
+        "options": null,
+        "unit": "pg",
+        "normalRange": "27-33"
+      },
+      {
+        "fieldName": "mchc",
+        "label": "MCHC",
+        "fieldType": "number",
+        "displayOrder": 13,
+        "isRequired": true,
+        "options": null,
+        "unit": "g/dL",
+        "normalRange": "32-36"
+      },
+      {
+        "fieldName": "rdw_cv",
+        "label": "RDW-CV",
+        "fieldType": "number",
+        "displayOrder": 14,
+        "isRequired": true,
+        "options": null,
+        "unit": "%",
+        "normalRange": "11.5-14.5"
+      },
+      {
+        "fieldName": "rdw_sd",
+        "label": "RDW-SD",
+        "fieldType": "number",
+        "displayOrder": 15,
+        "isRequired": true,
+        "options": null,
+        "unit": "fL",
+        "normalRange": "39-46"
+      },
+      {
+        "fieldName": "plt",
+        "label": "PLT",
+        "fieldType": "number",
+        "displayOrder": 16,
+        "isRequired": true,
+        "options": null,
+        "unit": "x10^3/uL",
+        "normalRange": null
+      },
+      {
+        "fieldName": "mpv",
+        "label": "MPV",
+        "fieldType": "number",
+        "displayOrder": 17,
+        "isRequired": true,
+        "options": null,
+        "unit": "fL",
+        "normalRange": "7.5-11.5"
+      },
+      {
+        "fieldName": "pdw",
+        "label": "PDW",
+        "fieldType": "number",
+        "displayOrder": 18,
+        "isRequired": true,
+        "options": null,
+        "unit": "fL",
+        "normalRange": "9.0-17.0"
+      },
+      {
+        "fieldName": "pct",
+        "label": "PCT",
+        "fieldType": "number",
+        "displayOrder": 19,
+        "isRequired": true,
+        "options": null,
+        "unit": "%",
+        "normalRange": "0.15-0.35"
+      },
+      {
+        "fieldName": "additional_notes",
+        "label": "Additional Notes",
+        "fieldType": "textarea",
+        "displayOrder": 20,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      }
+    ]
+  },
+  {
+    "name": "ESR",
+    "code": "ESR001",
+    "category": "Hematology",
+    "description": "ESR test",
+    "price": 120,
+    "unit": "mm/hr",
+    "displayOrder": 8,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "result",
+        "label": "Result (mm/hr)",
+        "fieldType": "number",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": null,
+        "unit": "mm/hr",
+        "normalRange": "Male: 0-15 mm/hr, Female: 0-20 mm/hr"
+      },
+      {
+        "fieldName": "reference_range",
+        "label": "Reference Range",
+        "fieldType": "text",
+        "displayOrder": 2,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "remarks",
+        "label": "Remarks",
+        "fieldType": "textarea",
+        "displayOrder": 3,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      }
+    ]
+  },
+  {
+    "name": "Fasting Blood Glucose",
+    "code": "FBG001",
+    "category": "Blood Chemistry",
+    "description": null,
+    "price": 50,
+    "unit": "UNIT",
+    "displayOrder": 10,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "value",
+        "label": "Fasting Blood Glucose (mg/dL)",
+        "fieldType": "number",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": null,
+        "unit": "mg/dL",
+        "normalRange": "70–99"
+      }
+    ]
+  },
+  {
+    "name": "HbA1c",
+    "code": "HBA1C001",
+    "category": "Blood Chemistry",
+    "description": null,
+    "price": 1500,
+    "unit": "UNIT",
+    "displayOrder": 12,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "value",
+        "label": "HbA1c (%)",
+        "fieldType": "number",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": null,
+        "unit": "%",
+        "normalRange": "<5.7"
+      }
+    ]
+  },
+  {
+    "name": "RHEUMATIC  ARTERITIS",
+    "code": "LAB012",
+    "category": "Laboratory",
+    "description": "Lab test: RHEUMATIC  ARTERITIS",
+    "price": 350,
+    "unit": "UNIT",
+    "displayOrder": 0,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "result",
+        "label": "Result",
+        "fieldType": "textarea",
+        "displayOrder": 1,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "remarks",
+        "label": "Remarks",
+        "fieldType": "textarea",
+        "displayOrder": 2,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      }
+    ]
+  },
+  {
+    "name": "Random Blood Glucose",
+    "code": "RBG001",
+    "category": "Blood Chemistry",
+    "description": null,
+    "price": 70,
+    "unit": "UNIT",
+    "displayOrder": 11,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "value",
+        "label": "Random Blood Glucose (mg/dL)",
+        "fieldType": "number",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": null,
+        "unit": "mg/dL",
+        "normalRange": "<140"
+      }
+    ]
+  },
+  {
+    "name": "Reticulocyte Count",
+    "code": "RET001",
+    "category": "Hematology",
+    "description": null,
+    "price": 200,
+    "unit": "UNIT",
+    "displayOrder": 10,
+    "isActive": false,
+    "resultFields": [
+      {
+        "fieldName": "value",
+        "label": "Reticulocyte Count (%)",
+        "fieldType": "number",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": null,
+        "unit": "%",
+        "normalRange": "0.5–2.5"
+      }
+    ]
+  },
+  {
+    "name": "Stool Examination",
+    "code": "STOOL001",
+    "category": "Stool Examination",
+    "description": null,
+    "price": 100,
+    "unit": "UNIT",
+    "displayOrder": 1,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "consistency",
+        "label": "Consistency",
+        "fieldType": "select",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": [
+          "Formed",
+          "Semi-formed",
+          "Loose",
+          "Watery",
+          "Hard"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "blood",
+        "label": "Blood",
+        "fieldType": "select",
+        "displayOrder": 2,
+        "isRequired": true,
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "unit": null,
+        "normalRange": "No"
+      },
+      {
+        "fieldName": "mucus",
+        "label": "Mucus",
+        "fieldType": "select",
+        "displayOrder": 3,
+        "isRequired": true,
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "unit": null,
+        "normalRange": "No"
+      },
+      {
+        "fieldName": "ova",
+        "label": "Ova",
+        "fieldType": "select",
+        "displayOrder": 4,
+        "isRequired": true,
+        "options": [
+          "No O/P Seen",
+          "Seen"
+        ],
+        "unit": null,
+        "normalRange": "Not seen"
+      },
+      {
+        "fieldName": "parasite",
+        "label": "Parasite",
+        "fieldType": "select",
+        "displayOrder": 5,
+        "isRequired": true,
+        "options": [
+          "No O/P Seen",
+          "Seen"
+        ],
+        "unit": null,
+        "normalRange": "Not seen"
+      },
+      {
+        "fieldName": "parasite_type",
+        "label": "Parasite Type (if seen)",
+        "fieldType": "select",
+        "displayOrder": 6,
+        "isRequired": false,
+        "options": [
+          "Ascaris lumbricoides",
+          "Trichuris trichiura",
+          "Hookworm",
+          "Entamoeba histolytica",
+          "Giardia lamblia",
+          "Taenia species",
+          "Hymenolepis nana",
+          "Enterobius vermicularis",
+          "Strongyloides stercoralis",
+          "Schistosoma mansoni",
+          "Other (specify in remarks)"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "cyst",
+        "label": "Cyst",
+        "fieldType": "select",
+        "displayOrder": 7,
+        "isRequired": true,
+        "options": [
+          "Seen",
+          "Not seen"
+        ],
+        "unit": null,
+        "normalRange": "Not seen"
+      },
+      {
+        "fieldName": "remarks",
+        "label": "Remarks",
+        "fieldType": "textarea",
+        "displayOrder": 8,
+        "isRequired": false,
+        "options": null,
+        "unit": null,
+        "normalRange": null
+      }
+    ]
+  },
+  {
+    "name": "Urinalysis",
+    "code": "URINE001",
+    "category": "Urinalysis",
+    "description": null,
+    "price": 100,
+    "unit": "UNIT",
+    "displayOrder": 1,
+    "isActive": true,
+    "resultFields": [
+      {
+        "fieldName": "colour",
+        "label": "Colour",
+        "fieldType": "select",
+        "displayOrder": 1,
+        "isRequired": true,
+        "options": [
+          "Pale Yellow",
+          "Yellow",
+          "Dark Yellow",
+          "Amber",
+          "Red",
+          "Brown",
+          "Green",
+          "Colorless"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "appearance",
+        "label": "Appearance",
+        "fieldType": "select",
+        "displayOrder": 2,
+        "isRequired": true,
+        "options": [
+          "Clear",
+          "Slightly Turbid",
+          "Turbid",
+          "Cloudy"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "ph",
+        "label": "pH",
+        "fieldType": "number",
+        "displayOrder": 3,
+        "isRequired": true,
+        "options": null,
+        "unit": null,
+        "normalRange": "4.5 - 8.0"
+      },
+      {
+        "fieldName": "specific_gravity",
+        "label": "Specific Gravity (SG)",
+        "fieldType": "number",
+        "displayOrder": 4,
+        "isRequired": true,
+        "options": null,
+        "unit": null,
+        "normalRange": "1.005 - 1.030"
+      },
+      {
+        "fieldName": "protein",
+        "label": "Protein",
+        "fieldType": "select",
+        "displayOrder": 5,
+        "isRequired": true,
+        "options": [
+          "Negative",
+          "Trace",
+          "+1",
+          "+2",
+          "+3",
+          "+4"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "sugar_glucose",
+        "label": "Sugar (Glucose)",
+        "fieldType": "select",
+        "displayOrder": 6,
+        "isRequired": true,
+        "options": [
+          "Negative",
+          "Trace",
+          "+1",
+          "+2",
+          "+3",
+          "+4"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "ketone",
+        "label": "Ketone",
+        "fieldType": "select",
+        "displayOrder": 7,
+        "isRequired": true,
+        "options": [
+          "Negative",
+          "Trace",
+          "Small (+)",
+          "Moderate (++)",
+          "Large (+++)"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "bilirubin",
+        "label": "Bilirubin",
+        "fieldType": "select",
+        "displayOrder": 8,
+        "isRequired": true,
+        "options": [
+          "Negative",
+          "+1",
+          "+2",
+          "+3"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "urobilinogen",
+        "label": "Urobilinogen",
+        "fieldType": "select",
+        "displayOrder": 9,
+        "isRequired": true,
+        "options": [
+          "Normal",
+          "0.2 mg/dL",
+          "1 mg/dL",
+          "2 mg/dL",
+          "4 mg/dL",
+          "8 mg/dL"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "blood",
+        "label": "Blood",
+        "fieldType": "select",
+        "displayOrder": 10,
+        "isRequired": true,
+        "options": [
+          "Negative",
+          "Trace",
+          "+1",
+          "+2",
+          "+3"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "epithelial_cells",
+        "label": "Epithelial Cells",
+        "fieldType": "number",
+        "displayOrder": 11,
+        "isRequired": true,
+        "options": null,
+        "unit": "/HPF",
+        "normalRange": null
+      },
+      {
+        "fieldName": "wbc_pus_cells",
+        "label": "WBC (Pus Cells)",
+        "fieldType": "number",
+        "displayOrder": 12,
+        "isRequired": true,
+        "options": null,
+        "unit": "/HPF",
+        "normalRange": null
+      },
+      {
+        "fieldName": "rbc",
+        "label": "RBC",
+        "fieldType": "number",
+        "displayOrder": 13,
+        "isRequired": true,
+        "options": null,
+        "unit": "/HPF",
+        "normalRange": null
+      },
+      {
+        "fieldName": "casts",
+        "label": "Casts",
+        "fieldType": "select",
+        "displayOrder": 14,
+        "isRequired": true,
+        "options": [
+          "None",
+          "Hyaline",
+          "Granular",
+          "RBC Cast",
+          "WBC Cast",
+          "Epithelial Cast"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "cast_count",
+        "label": "Cast Count (Optional)",
+        "fieldType": "number",
+        "displayOrder": 15,
+        "isRequired": false,
+        "options": null,
+        "unit": "/LPF",
+        "normalRange": null
+      },
+      {
+        "fieldName": "bacteria",
+        "label": "Bacteria",
+        "fieldType": "select",
+        "displayOrder": 16,
+        "isRequired": true,
+        "options": [
+          "None",
+          "Few",
+          "Moderate",
+          "Many"
+        ],
+        "unit": null,
+        "normalRange": null
+      },
+      {
+        "fieldName": "hcg_test",
+        "label": "HCG Test",
+        "fieldType": "select",
+        "displayOrder": 17,
+        "isRequired": true,
+        "options": [
+          "Negative",
+          "Positive"
+        ],
+        "unit": null,
+        "normalRange": null
+      }
+    ]
+  }
+]

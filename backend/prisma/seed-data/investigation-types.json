@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Ultrasound - Abdomen",
+    "price": 400,
+    "category": "RADIOLOGY"
+  },
+  {
+    "name": "Ultrasound - Pelvis",
+    "price": 380,
+    "category": "RADIOLOGY"
+  },
+  {
+    "name": "Abdomino-Pelvic Ultrasound (Female)",
+    "price": 1500,
+    "category": "RADIOLOGY"
+  },
+  {
+    "name": "Abdomino-Pelvic Ultrasound (Male)",
+    "price": 1500,
+    "category": "RADIOLOGY"
+  },
+  {
+    "name": "Transvaginal Ultrasound (TVS)",
+    "price": 1200,
+    "category": "RADIOLOGY"
+  },
+  {
+    "name": "Thyroid Ultrasound",
+    "price": 350,
+    "category": "RADIOLOGY"
+  },
+  {
+    "name": "Breast Ultrasound",
+    "price": 380,
+    "category": "RADIOLOGY"
+  },
+  {
+    "name": "Doppler Ultrasound",
+    "price": 450,
+    "category": "RADIOLOGY"
+  },
+  {
+    "name": "ECG Recording",
+    "price": 350,
+    "category": "RADIOLOGY"
+  },
+  {
+    "name": "Obstetric Ultrasound",
+    "price": 400,
+    "category": "RADIOLOGY"
+  }
+]

@@ -183,11 +183,18 @@ const ReferralPage = () => {
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        const datePart = dateString.split('T')[0].split(' ')[0];
+        const parts = datePart.split('-');
+        if (parts.length === 3) {
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1;
+            const day = parseInt(parts[2]);
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[month] + ' ' + day + ', ' + year;
+        }
+        const d = new Date(dateString);
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
     };
 
     const handlePrint = async (id) => {
@@ -378,9 +385,9 @@ const ReferralPage = () => {
                     <div class="container">
                         <div class="header">
                             <div class="header-left">
-                                <img src="/clinic-logo.jpg" alt="" class="logo" onerror="this.style.display='none'">
+                                <img src="/selihom.jpg" alt="" class="logo" onerror="this.style.display='none'">
                                 <div>
-                                    <h1 class="clinic-name">Charite Medium Clinic</h1>
+                                    <h1 class="clinic-name">Selihom Medical Clinic</h1>
                                     <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
                                 </div>
                             </div>
@@ -478,13 +485,13 @@ const ReferralPage = () => {
                         <div class="signature-section">
                             <div class="sig-box">
                                 <div class="sig-line">Referring Physician</div>
-                                <div style="font-size: 13px; margin-top: 5px;">Dr. ${referral.doctor?.fullname}</div>
+                                <div style="font-size: 13px; margin-top: 5px;">Dr. ${referral.doctor?.fullname}${referral.doctor?.qualifications?.length ? ` - ${referral.doctor.qualifications.join(', ')}` : ''}</div>
                             </div>
                             <div class="stamp-circle">Clinic Stamp</div>
                         </div>
 
                         <div class="footer">
-                            This is an official medical referral document from Charite Medium Clinic.
+                            This is an official medical referral document from Selihom Medical Clinic.
                             <br>Generated on ${currentDate}
                         </div>
                     </div>

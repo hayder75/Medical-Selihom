@@ -41,6 +41,7 @@ const LabOrders = () => {
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [testResults, setTestResults] = useState({});
   const [statusFilter, setStatusFilter] = useState('PENDING');
+  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const [searchTerm, setSearchTerm] = useState('');
   const [templates, setTemplates] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
@@ -53,13 +54,13 @@ const LabOrders = () => {
   useEffect(() => {
     fetchOrders();
     fetchTemplates();
-  }, [statusFilter]);
+  }, [statusFilter, dateFilter]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const response = await api.get('/labs/orders', {
-        params: { status: statusFilter }
+        params: { status: statusFilter, date: dateFilter }
       });
       console.log('📋 [fetchOrders] Raw response:', {
         batchOrders: response.data.batchOrders?.length || 0,
@@ -202,12 +203,16 @@ const LabOrders = () => {
       });
     }
 
-    // Sort completed orders by date (recent first)
-    if (statusFilter === 'COMPLETED') {
+    // Sort: completed first (by updatedAt desc), then pending (by createdAt desc)
+    if (statusFilter === 'COMPLETED' || statusFilter === 'ALL') {
       filtered.sort((a, b) => {
+        const aCompleted = a.status === 'COMPLETED';
+        const bCompleted = b.status === 'COMPLETED';
+        if (aCompleted && !bCompleted) return -1;
+        if (!aCompleted && bCompleted) return 1;
         const dateA = new Date(a.updatedAt || a.createdAt);
         const dateB = new Date(b.updatedAt || b.createdAt);
-        return dateB - dateA; // Descending order
+        return dateB - dateA;
       });
     }
 
@@ -980,9 +985,9 @@ const LabOrders = () => {
 
           <div class="header">
             <div class="header-left">
-              <img src="/clinic-logo.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+              <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
               <div class="clinic-info">
-                <h1 class="clinic-name">Charite Medium Clinic</h1>
+                <h1 class="clinic-name">Selihom Medical Clinic</h1>
                 <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
               </div>
             </div>
@@ -1108,7 +1113,7 @@ const LabOrders = () => {
           </div>
 
           <div class="print-footer">
-            Computer Generated Report • Charite Medium Clinic • ${formatDateTime(currentDate)}
+            Computer Generated Report • Selihom Medical Clinic • ${formatDateTime(currentDate)}
           </div>
         </body>
       </html>
@@ -1464,15 +1469,22 @@ const LabOrders = () => {
           />
         </div>
         <div className="flex items-center space-x-4">
-          <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
+          <label className="text-sm font-medium text-gray-700">Date:</label>
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <label className="text-sm font-medium text-gray-700">Status:</label>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="PENDING">Pending Orders</option>
-            <option value="COMPLETED">Completed Orders</option>
-            <option value="ALL">All Orders</option>
+            <option value="PENDING">Pending</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="ALL">All</option>
           </select>
           <span className="text-sm text-gray-500">
             Showing {getFilteredOrders().length} of {orders.length} orders

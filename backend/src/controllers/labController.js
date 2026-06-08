@@ -340,13 +340,62 @@ async function checkAndUpdateVisitStatus(visitId) {
     });
 
     if (!hasActiveLabOrders && !hasPendingLabBatch && !hasActiveRadiology) {
-      return await prisma.visit.update({ where: { id: visitId }, data: { status: 'AWAITING_RESULTS_REVIEW', queueType: 'RESULTS_REVIEW' } });
+      const updatedVisit = await prisma.visit.update({ where: { id: visitId }, data: { status: 'AWAITING_RESULTS_REVIEW', queueType: 'RESULTS_REVIEW' } });
+      if (!updatedVisit.assignmentId) {
+        const doctorFromOrder = await prisma.batchOrder.findFirst({
+          where: { visitId },
+          select: { doctorId: true }
+        });
+        if (doctorFromOrder) {
+          const assignment = await prisma.assignment.create({
+            data: { patientId: updatedVisit.patientId, doctorId: doctorFromOrder.doctorId, status: 'Active' }
+          });
+          await prisma.visit.update({ where: { id: visitId }, data: { assignmentId: assignment.id } });
+        }
+      }
+      return updatedVisit;
     } else if (!hasActiveLabOrders && !hasPendingLabBatch) {
       return await prisma.visit.update({ where: { id: visitId }, data: { status: 'SENT_TO_RADIOLOGY' } });
     }
     return visit;
-  } catch (error) {
+    } catch (error) {
     console.error(`Error checking/updating visit status for visit ${visitId}:`, error);
+    try {
+      const pendingLabTestCount = await prisma.labTestOrder.count({
+        where: { visitId, status: { notIn: ['COMPLETED', 'CANCELLED'] } }
+      });
+      const pendingLegacyLabCount = await prisma.labOrder.count({
+        where: { visitId, status: { notIn: ['COMPLETED', 'CANCELLED'] } }
+      });
+      const pendingBatchCount = await prisma.batchOrder.count({
+        where: { visitId, type: 'LAB', status: { notIn: ['COMPLETED', 'CANCELLED'] } }
+      });
+      const pendingRadiologyCount = await prisma.radiologyOrder.count({
+        where: { visitId, status: { notIn: ['COMPLETED', 'CANCELLED'] } }
+      });
+      if (pendingLabTestCount === 0 && pendingLegacyLabCount === 0 && pendingBatchCount === 0 && pendingRadiologyCount === 0) {
+        console.log('Fallback: All orders completed for visit ' + visitId + ', forcing AWAITING_RESULTS_REVIEW');
+        const updated = await prisma.visit.update({ where: { id: visitId }, data: { status: 'AWAITING_RESULTS_REVIEW', queueType: 'RESULTS_REVIEW' } });
+        // If visit has no assignment but related orders have a doctor, create an assignment
+        if (!updated.assignmentId) {
+          const doctorFromOrder = await prisma.batchOrder.findFirst({
+            where: { visitId },
+            select: { doctorId: true }
+          });
+          if (doctorFromOrder) {
+            const assignment = await prisma.assignment.create({
+              data: { patientId: updated.patientId, doctorId: doctorFromOrder.doctorId, status: 'Active' }
+            });
+            await prisma.visit.update({ where: { id: visitId }, data: { assignmentId: assignment.id } });
+            console.log('Created assignment ' + assignment.id + ' for visit ' + visitId + ' from batch order doctor');
+          }
+        }
+        return updated;
+      }
+      console.warn('Visit ' + visitId + ' not force-updated');
+    } catch (fallbackError) {
+      console.error('Fallback also failed for visit ' + visitId + ':', fallbackError);
+    }
   }
 }
 
@@ -918,13 +967,62 @@ async function checkAndUpdateVisitStatus(visitId) {
     });
 
     if (!hasActiveLabOrders && !hasPendingLabBatch && !hasActiveRadiology) {
-      return await prisma.visit.update({ where: { id: visitId }, data: { status: 'AWAITING_RESULTS_REVIEW', queueType: 'RESULTS_REVIEW' } });
+      const updatedVisit = await prisma.visit.update({ where: { id: visitId }, data: { status: 'AWAITING_RESULTS_REVIEW', queueType: 'RESULTS_REVIEW' } });
+      if (!updatedVisit.assignmentId) {
+        const doctorFromOrder = await prisma.batchOrder.findFirst({
+          where: { visitId },
+          select: { doctorId: true }
+        });
+        if (doctorFromOrder) {
+          const assignment = await prisma.assignment.create({
+            data: { patientId: updatedVisit.patientId, doctorId: doctorFromOrder.doctorId, status: 'Active' }
+          });
+          await prisma.visit.update({ where: { id: visitId }, data: { assignmentId: assignment.id } });
+        }
+      }
+      return updatedVisit;
     } else if (!hasActiveLabOrders && !hasPendingLabBatch) {
       return await prisma.visit.update({ where: { id: visitId }, data: { status: 'SENT_TO_RADIOLOGY' } });
     }
     return visit;
-  } catch (error) {
+    } catch (error) {
     console.error(`Error checking/updating visit status for visit ${visitId}:`, error);
+    try {
+      const pendingLabTestCount = await prisma.labTestOrder.count({
+        where: { visitId, status: { notIn: ['COMPLETED', 'CANCELLED'] } }
+      });
+      const pendingLegacyLabCount = await prisma.labOrder.count({
+        where: { visitId, status: { notIn: ['COMPLETED', 'CANCELLED'] } }
+      });
+      const pendingBatchCount = await prisma.batchOrder.count({
+        where: { visitId, type: 'LAB', status: { notIn: ['COMPLETED', 'CANCELLED'] } }
+      });
+      const pendingRadiologyCount = await prisma.radiologyOrder.count({
+        where: { visitId, status: { notIn: ['COMPLETED', 'CANCELLED'] } }
+      });
+      if (pendingLabTestCount === 0 && pendingLegacyLabCount === 0 && pendingBatchCount === 0 && pendingRadiologyCount === 0) {
+        console.log('Fallback: All orders completed for visit ' + visitId + ', forcing AWAITING_RESULTS_REVIEW');
+        const updated = await prisma.visit.update({ where: { id: visitId }, data: { status: 'AWAITING_RESULTS_REVIEW', queueType: 'RESULTS_REVIEW' } });
+        // If visit has no assignment but related orders have a doctor, create an assignment
+        if (!updated.assignmentId) {
+          const doctorFromOrder = await prisma.batchOrder.findFirst({
+            where: { visitId },
+            select: { doctorId: true }
+          });
+          if (doctorFromOrder) {
+            const assignment = await prisma.assignment.create({
+              data: { patientId: updated.patientId, doctorId: doctorFromOrder.doctorId, status: 'Active' }
+            });
+            await prisma.visit.update({ where: { id: visitId }, data: { assignmentId: assignment.id } });
+            console.log('Created assignment ' + assignment.id + ' for visit ' + visitId + ' from batch order doctor');
+          }
+        }
+        return updated;
+      }
+      console.warn('Visit ' + visitId + ' not force-updated');
+    } catch (fallbackError) {
+      console.error('Fallback also failed for visit ' + visitId + ':', fallbackError);
+    }
   }
 }
 

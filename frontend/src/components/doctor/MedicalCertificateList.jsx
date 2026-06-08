@@ -182,11 +182,19 @@ const MedicalCertificateList = () => {
 
   const generateCertificateHTML = (certificate) => {
     const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      if (!dateString) return '';
+      const datePart = dateString.split('T')[0].split(' ')[0];
+      const parts = datePart.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1;
+        const day = parseInt(parts[2]);
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return months[month] + ' ' + day + ', ' + year;
+      }
+      const d = new Date(dateString);
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
     };
 
     const calculateAge = (dob) => {
@@ -368,9 +376,9 @@ const MedicalCertificateList = () => {
 
       <div class="certificate-header">
         <div class="header-left">
-          <img src="/clinic-logo.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+          <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
           <div class="clinic-info">
-            <h1 class="clinic-name">Charite Medium Clinic</h1>
+            <h1 class="clinic-name">Selihom Medical Clinic</h1>
             <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
           </div>
         </div>
@@ -478,11 +486,19 @@ const MedicalCertificateList = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    if (!dateString) return '';
+    const datePart = dateString.split('T')[0].split(' ')[0];
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1;
+      const day = parseInt(parts[2]);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return months[month] + ' ' + day + ', ' + year;
+    }
+    const d = new Date(dateString);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
   };
 
   const getStatusColor = (status) => {

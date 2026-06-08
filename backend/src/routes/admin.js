@@ -92,5 +92,6 @@ router.put('/system-settings/:key', systemSettingsController.updateSetting);
 router.get('/patients', adminController.getAllPatients);
 router.delete('/patients/bulk', adminController.deleteMultiplePatients);
 router.delete('/patients/:patientId', adminController.deletePatient);
+router.put('/patients/:patientId/complete-visit', adminController.completePatientVisits);
 
 module.exports = router;

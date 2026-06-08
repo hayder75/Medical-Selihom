@@ -6062,3 +6062,78 @@ exports.deleteMultiplePatients = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.completePatientVisits = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+
+    if (!patientId) {
+      return res.status(400).json({ error: "Patient ID is required" });
+    }
+
+    const activeStatuses = [
+      "WAITING_FOR_TRIAGE",
+      "TRIAGED",
+      "WAITING_FOR_DOCTOR",
+      "IN_DOCTOR_QUEUE",
+      "UNDER_DOCTOR_REVIEW",
+      "SENT_TO_LAB",
+      "SENT_TO_RADIOLOGY",
+      "SENT_TO_BOTH",
+      "RETURNED_WITH_RESULTS",
+      "AWAITING_LAB_RESULTS",
+      "AWAITING_RADIOLOGY_RESULTS",
+      "AWAITING_RESULTS_REVIEW",
+      "WAITING_FOR_NURSE_SERVICE",
+      "SENT_TO_PHARMACY"
+    ];
+
+    const activeVisits = await prisma.visit.findMany({
+      where: {
+        patientId,
+        status: { in: activeStatuses }
+      }
+    });
+
+    if (activeVisits.length === 0) {
+      return res.status(404).json({ error: "No active visits found", message: "This patient does not have any active visits to complete" });
+    }
+
+    const completedVisits = [];
+    for (const visit of activeVisits) {
+      await prisma.visit.update({
+        where: { id: visit.id },
+        data: { status: "COMPLETED" }
+      });
+      completedVisits.push({ id: visit.id, visitUid: visit.visitUid, previousStatus: visit.status });
+    }
+
+    const visitDetails = completedVisits.map(function(v) {
+      return { visitUid: v.visitUid, from: v.previousStatus, to: "COMPLETED" };
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        action: "ADMIN_COMPLETE_VISIT",
+        entity: "Visit",
+        entityId: activeVisits[0].id,
+        userId: req.user.id,
+        details: JSON.stringify({
+          patientId,
+          completedVisits: visitDetails,
+          count: completedVisits.length
+        })
+      }
+    });
+
+    res.json({
+      message: completedVisits.length + " active visit(s) completed successfully",
+      completedVisits: completedVisits.map(function(v) {
+        return { visitUid: v.visitUid, previousStatus: v.previousStatus, newStatus: "COMPLETED" };
+      })
+    });
+  } catch (error) {
+    console.error("Error completing patient visits:", error);
+    res.status(500).json({ error: error.message });
+  }
+};

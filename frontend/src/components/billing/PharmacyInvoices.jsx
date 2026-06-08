@@ -11,6 +11,7 @@ const PharmacyInvoices = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState('PENDING'); // Default to PENDING
+  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const [paymentData, setPaymentData] = useState({
     type: 'CASH',
     amount: '',
@@ -141,7 +142,7 @@ const PharmacyInvoices = () => {
           <div class="receipt-container">
             ${invoice.status === 'PAID' || invoice.status === 'DISPENSED' ? `<div class="status-stamp">${invoice.status}</div>` : ''}
             <div class="header">
-              <h1 class="clinic-name">Charite Medium Clinic</h1>
+              <h1 class="clinic-name">Selihom Medical Clinic</h1>
               <h2 class="receipt-title">Pharmacy Receipt</h2>
               <div style="font-size: 9px; color: #64748b;">${currentDate} ${currentTime}</div>
             </div>
@@ -181,7 +182,7 @@ const PharmacyInvoices = () => {
             </div>
 
             <div class="footer">
-              Thank you for choosing Charite Medium Clinic<br>
+              Thank you for choosing Selihom Medical Clinic<br>
               Quality Healthcare You Can Trust
             </div>
           </div>
@@ -223,7 +224,12 @@ const PharmacyInvoices = () => {
 
   // Filter invoices based on status and sort by creation date (newest first)
   const filteredInvoices = invoices
-    .filter(invoice => invoice.status === statusFilter)
+    .filter(invoice => {
+      const matchesStatus = invoice.status === statusFilter;
+      const invoiceDate = new Date(invoice.createdAt).toISOString().split('T')[0];
+      const matchesDate = invoiceDate === dateFilter;
+      return matchesStatus && matchesDate;
+    })
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   // Debug logging
@@ -264,7 +270,16 @@ const PharmacyInvoices = () => {
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
+            <label className="text-sm font-medium text-gray-700">Date:</label>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="input text-sm"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Status:</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}

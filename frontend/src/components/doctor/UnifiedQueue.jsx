@@ -252,6 +252,32 @@ const UnifiedQueue = () => {
     return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const getDateStr = (date) => {
+    if (!date) return '';
+    return new Date(date).toISOString().split('T')[0];
+  };
+
+  const isToday = (date) => {
+    if (!date) return false;
+    const todayStr = new Date().toISOString().split('T')[0];
+    return getDateStr(date) === todayStr;
+  };
+
+  const isYesterday = (date) => {
+    if (!date) return false;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    return getDateStr(date) === yesterdayStr;
+  };
+
+  const getDateLabel = (date) => {
+    if (!date) return '';
+    if (isToday(date)) return 'TODAY';
+    if (isYesterday(date)) return 'YESTERDAY';
+    return getDateStr(date);
+  };
+
   const renderStandardCard = (visit, index) => (
     <div
       key={visit.id}
@@ -298,6 +324,9 @@ const UnifiedQueue = () => {
 
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+              <span className="text-xs font-bold px-2 py-1 rounded bg-blue-100 text-blue-700">
+                {getDateLabel(visit.createdAt)}
+              </span>
               <Clock className="w-4 h-4 text-gray-500" />
               <span className="text-sm text-gray-600 font-medium">{formatShortTime(visit.createdAt)}</span>
             </div>

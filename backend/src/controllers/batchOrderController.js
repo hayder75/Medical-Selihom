@@ -64,6 +64,15 @@ exports.createBatchOrder = async (req, res) => {
       // Regular patient - Using requesting user ID
     }
 
+    // If visit has no assignment but a doctor is placing orders, create one
+    if (!visit.assignmentId && actualDoctorId) {
+      const newAssignment = await prisma.assignment.create({
+        data: { patientId: visit.patientId, doctorId: actualDoctorId, status: 'Active' }
+      });
+      await prisma.visit.update({ where: { id: visit.id }, data: { assignmentId: newAssignment.id } });
+      console.log('Auto-created assignment ' + newAssignment.id + ' for visit ' + visit.id);
+    }
+
     // For nurse services or procedures with nurse assignment, validate assigned nurse
     if ((type === 'NURSE' || type === 'PROCEDURE') && assignedNurseId) {
       const assignedNurse = await prisma.user.findUnique({
@@ -1174,6 +1183,15 @@ exports.createLabTestOrders = async (req, res) => {
 
     if (!visit) {
       return res.status(404).json({ error: 'Visit not found' });
+    }
+
+    // If visit has no assignment but a doctor is placing orders, create one
+    if (!visit.assignmentId) {
+      const newAssignment = await prisma.assignment.create({
+        data: { patientId: visit.patientId, doctorId: req.user.id, status: 'Active' }
+      });
+      await prisma.visit.update({ where: { id: visit.id }, data: { assignmentId: newAssignment.id } });
+      console.log('Auto-created assignment ' + newAssignment.id + ' for visit ' + visit.id);
     }
 
     // Validate patient

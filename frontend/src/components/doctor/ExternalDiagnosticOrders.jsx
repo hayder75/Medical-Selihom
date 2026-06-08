@@ -249,7 +249,7 @@ const ExternalDiagnosticOrders = ({
         </head>
         <body>
           <div class="header">
-            <div class="clinic-name">Charite Medium Clinic</div>
+            <div class="clinic-name">Selihom Medical Clinic</div>
             <div class="form-title">External ${escapeHtml(typeLabel)} Order Form</div>
           </div>
 

@@ -361,7 +361,7 @@ const DentalChart = forwardRef(({ patientId, visitId, patientAge, onSave, initia
 
     return `
       <div class="header">
-        <h1>Charite Medium Clinic</h1>
+        <h1>Selihom Medical Clinic</h1>
         <p>Dental Department</p>
         <h2>${escapeHtml(title)}</h2>
         <div class="meta-grid">

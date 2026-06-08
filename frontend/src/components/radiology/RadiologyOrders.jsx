@@ -676,9 +676,9 @@ const RadiologyOrders = () => {
 
         <div class="header">
           <div class="header-left">
-            <img src="/clinic-logo.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+            <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
             <div class="clinic-info">
-              <h1 class="clinic-name">Charite Medium Clinic</h1>
+              <h1 class="clinic-name">Selihom Medical Clinic</h1>
               <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
             </div>
           </div>
@@ -770,7 +770,7 @@ const RadiologyOrders = () => {
         </div>
 
         <div class="print-footer">
-          Computer Generated Report • Charite Medium Clinic • ${currentDate} ${currentTime}
+          Computer Generated Report • Selihom Medical Clinic • ${currentDate} ${currentTime}
         </div>
       </body>
     </html>

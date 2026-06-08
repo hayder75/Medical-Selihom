@@ -142,6 +142,18 @@ async function checkVisitInvestigationCompletion(visitId) {
           }
         }
       });
+      if (!updatedVisit.assignmentId) {
+        const doctorFromOrder = await prisma.batchOrder.findFirst({
+          where: { visitId },
+          select: { doctorId: true }
+        });
+        if (doctorFromOrder) {
+          const assignment = await prisma.assignment.create({
+            data: { patientId: updatedVisit.patientId, doctorId: doctorFromOrder.doctorId, status: 'Active' }
+          });
+          await prisma.visit.update({ where: { id: visitId }, data: { assignmentId: assignment.id } });
+        }
+      }
 
       // Create audit log
       await prisma.auditLog.create({

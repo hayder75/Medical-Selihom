@@ -201,6 +201,8 @@ const LabOrdering = ({ visitId, patientId, patient, visit, onOrdersPlaced, exist
       } else {
         newSet.add(testId);
       }
+      // Save to session storage for cross-tab warning
+      sessionStorage.setItem('selectedLabTests', JSON.stringify(Array.from(newSet)));
       return newSet;
     });
   };
@@ -472,7 +474,7 @@ const LabOrdering = ({ visitId, patientId, patient, visit, onOrdersPlaced, exist
                     </head>
                     <body>
                       <div class="header">
-                        <div class="clinic-name">Charite Medium Clinic</div>
+                        <div class="clinic-name">Selihom Medical Clinic</div>
                         <div class="clinic-sub">Laboratory Order Form</div>
                       </div>
                       

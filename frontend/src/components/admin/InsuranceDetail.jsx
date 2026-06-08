@@ -227,7 +227,7 @@ const InsuranceDetail = () => {
         </head>
         <body>
           <div class="header">
-            <div class="clinic-name">Charite Medium Clinic</div>
+            <div class="clinic-name">Selihom Medical Clinic</div>
             <div class="report-title">Insurance Report - ${report.insurance.name}</div>
             <div>Period: ${report.reportPeriod.startDate} to ${report.reportPeriod.endDate}</div>
             <div>Generated: ${new Date(report.reportPeriod.generatedAt).toLocaleString()}</div>
@@ -282,7 +282,7 @@ const InsuranceDetail = () => {
               <div style="font-size: 11px;">Date: _________________________</div>
             </div>
             <div style="text-align: center; font-size: 10px; color: #666; margin-top: 20px;">
-              <div>Charite Medium Clinic</div>
+              <div>Selihom Medical Clinic</div>
             </div>
           </div>
         </body>

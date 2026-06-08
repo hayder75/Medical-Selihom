@@ -431,7 +431,7 @@ const BillingQueue = () => {
           <div class="receipt-container">
             ${billing.status === "PAID" ? `<div class="status-stamp">PAID</div>` : ""}
             <div class="header">
-              <h1 class="clinic-name">Charite Medium Clinic</h1>
+              <h1 class="clinic-name">Selihom Medical Clinic</h1>
               <h2 class="receipt-title">Service Receipt</h2>
               <div style="font-size: 9px; color: #64748b;">${currentDate} ${currentTime}</div>
             </div>
@@ -478,7 +478,7 @@ const BillingQueue = () => {
             </div>
 
             <div class="footer">
-              Thank you for choosing Charite Medium Clinic<br>
+              Thank you for choosing Selihom Medical Clinic<br>
               Quality Healthcare You Can Trust
             </div>
           </div>

@@ -333,12 +333,7 @@ const Layout = ({ children, title, subtitle }) => {
       <div className={`fixed inset-y-0 left-0 z-50 w-64 shadow-xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`} style={{ backgroundColor: 'var(--primary)' }}>
         <div className="flex items-center justify-between h-16 px-4 border-b" style={{ borderColor: 'var(--secondary)' }}>
           <div className="flex items-center">
-            <img
-              src="/clinic-logo.jpg"
-              alt="Charite Medium Clinic"
-              className="h-10 w-10 rounded-full object-cover border-2 border-white"
-            />
-            <span className="ml-3 text-xl font-bold text-white">Charite Medium Clinic</span>
+            <span className="ml-3 text-xl font-bold text-white">Selihom Medical Clinic</span>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}

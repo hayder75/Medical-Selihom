@@ -57,7 +57,7 @@ const RadiologyOrdering = ({ visitId, patientId, onOrdersPlaced, existingOrders 
       return;
     }
 
-    setSelectedTests(prev => {
+    setSelectedTests(prev => { sessionStorage.setItem("selectedRadioTests", JSON.stringify(prev));
       const isSelected = prev.some(selected => selected.id === test.id);
       if (isSelected) {
         return prev.filter(selected => selected.id !== test.id);

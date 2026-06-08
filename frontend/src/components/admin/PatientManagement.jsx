@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2, AlertTriangle, Users, Phone, Calendar, Edit2, CheckSquare, Square } from 'lucide-react';
+import { Search, Trash2, AlertTriangle, Users, Phone, Calendar, Edit2, CheckSquare, Square, CheckCircle } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,8 @@ const PatientManagement = () => {
   const [showEditModal, setShowEditModal] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
   const [selectedPatients, setSelectedPatients] = useState([]);
+  const [showCompleteVisitModal, setShowCompleteVisitModal] = useState(null);
+  const [completeVisitLoading, setCompleteVisitLoading] = useState(false);
 
   const [editForm, setEditForm] = useState({
     name: '',
@@ -268,6 +270,13 @@ const PatientManagement = () => {
                           Edit
                         </button>
                         <button
+                          onClick={() => setShowCompleteVisitModal(patient)}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Complete Visit
+                        </button>
+                        <button
                           onClick={() => setShowDeleteModal(patient)}
                           className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                         >
@@ -424,6 +433,60 @@ const PatientManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Visit Modal */}
+      {showCompleteVisitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl border border-green-100">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-10 w-10 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-900">Complete Active Visits?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  This will mark all active visits as completed for this patient.
+                </p>
+                {showCompleteVisitModal && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-bold text-green-800">
+                      Patient: {showCompleteVisitModal.name} ({showCompleteVisitModal.id})
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setShowCompleteVisitModal(null)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
+                disabled={completeVisitLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setCompleteVisitLoading(true);
+                    const res = await api.put("/admin/patients/" + showCompleteVisitModal.id + "/complete-visit");
+                    toast.success(res.data.message);
+                    setShowCompleteVisitModal(null);
+                  } catch (error) {
+                    toast.error(error.response?.data?.message || "Failed to complete visits");
+                  } finally {
+                    setCompleteVisitLoading(false);
+                  }
+                }}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center gap-2"
+                disabled={completeVisitLoading}
+              >
+                {completeVisitLoading && <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                {completeVisitLoading ? "Completing..." : "Complete Visits"}
+              </button>
+            </div>
           </div>
         </div>
       )}

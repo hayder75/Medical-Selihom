@@ -3,11 +3,19 @@ import { X, Printer } from 'lucide-react';
 
 const PrintableMedicalCertificate = ({ certificate, onClose }) => {
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    if (!dateString) return '';
+    const datePart = dateString.split('T')[0].split(' ')[0];
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1;
+      const day = parseInt(parts[2]);
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      return months[month] + ' ' + day + ', ' + year;
+    }
+    const d = new Date(dateString);
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
   };
 
   const calculateAge = (dob) => {
@@ -67,11 +75,11 @@ const PrintableMedicalCertificate = ({ certificate, onClose }) => {
         {/* Header */}
         <div className="text-center py-4 border-b border-gray-300">
           <img
-            src="/clinic-logo.jpg"
-            alt="Charite Medium Clinic Logo"
+            src="/selihom.jpg"
+            alt="Selihom Medical Clinic Logo"
             className="h-16 w-16 mx-auto mb-2 rounded-full object-cover border-2 border-gray-300"
           />
-          <h1 className="text-xl font-bold text-black">Charite Medium Clinic</h1>
+          <h1 className="text-xl font-bold text-black">Selihom Medical Clinic</h1>
         </div>
 
         {/* Certificate Title */}
@@ -130,10 +138,10 @@ const PrintableMedicalCertificate = ({ certificate, onClose }) => {
         <div className="py-3">
           <h3 className="text-sm font-bold text-black underline mb-2">Issued By</h3>
           <div className="text-sm">
-            <p className="text-black"><strong>Dr.</strong> {certificate.doctor.fullname}</p>
-            {certificate.doctor.qualifications && (
-              <p className="text-black">{certificate.doctor.qualifications}</p>
-            )}
+            <p className="text-black">
+              <strong>Dr.</strong> {certificate.doctor.fullname}
+              {certificate.doctor.qualifications?.length > 0 && ` - ${certificate.doctor.qualifications.join(', ')}`}
+            </p>
           </div>
         </div>
 

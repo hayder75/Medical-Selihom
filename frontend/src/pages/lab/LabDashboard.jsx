@@ -40,7 +40,7 @@ const LabDashboard = () => {
       
       const stats = {
         total: allOrders.length,
-        pending: allOrders.filter(order => order.status === 'QUEUED' || order.status === 'UNPAID' || order.status === 'PAID').length,
+        pending: allOrders.filter(order => order.status !== 'COMPLETED').length,
         completed: allOrders.filter(order => order.status === 'COMPLETED' || order.status === 'VERIFIED').length,
         inProgress: allOrders.filter(order => order.status === 'IN_PROGRESS').length
       };

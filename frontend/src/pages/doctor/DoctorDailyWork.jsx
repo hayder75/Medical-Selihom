@@ -256,7 +256,7 @@ const DoctorDailyWork = () => {
         <body>
           <div class="page">
             <div class="header">
-              <h1>Charite Medium Clinic</h1>
+              <h1>Selihom Medical Clinic</h1>
               <p>Doctor Daily Work Report</p>
               <p>Date: ${dayDetails.date}</p>
             </div>

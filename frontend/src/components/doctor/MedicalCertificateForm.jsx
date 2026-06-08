@@ -342,7 +342,7 @@ const MedicalCertificateForm = ({ certificate, onSave, onCancel, isEditing = fal
               <option value="">{isLoadingVisits ? 'Loading visits...' : 'Select a visit to populate data'}</option>
               {patientVisits.map(v => (
                 <option key={v.id} value={v.id}>
-                  {new Date(v.createdAt).toLocaleDateString()} - {v.visitUid}
+                  {new Date(v.createdAt).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit' })} - {v.visitUid}
                 </option>
               ))}
             </select>

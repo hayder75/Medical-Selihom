@@ -410,7 +410,7 @@ const DiseaseReports = ({ forceSelectedMode = false }) => {
                         </h1>
                         <div className="grid grid-cols-2 gap-4 border border-black text-sm">
                             <div className="p-2 border-r border-black">
-                                <div className="font-bold">Health Facility: Charite Medium Clinic</div>
+                                <div className="font-bold">Health Facility: Selihom Medical Clinic</div>
                                 <div>Type: Private Clinic</div>
                                 <div>Zone: Hawassa</div>
                             </div>
@@ -650,7 +650,7 @@ const DiseaseReports = ({ forceSelectedMode = false }) => {
 
                         <div className="header-box">
                             <div className="w-1/2 pr-2 border-r border-black">
-                                <div><strong>Health Facility:</strong> Charite Medium Clinic</div>
+                                <div><strong>Health Facility:</strong> Selihom Medical Clinic</div>
                                 <div><strong>Type:</strong> Private Clinic&nbsp;&nbsp;&nbsp;&nbsp;<strong>Zone:</strong> Hawassa</div>
                                 <div><strong>Region:</strong> Sidama Region</div>
                             </div>
