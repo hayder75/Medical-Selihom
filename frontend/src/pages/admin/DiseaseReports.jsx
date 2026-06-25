@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Download, Printer, Filter, ChevronLeft, Table, FileText, Edit2, Save } from 'lucide-react';
 import api from '../../services/api';
-import Layout from '../../components/common/Layout';
 import toast from 'react-hot-toast';
 
 const DiseaseReports = ({ forceSelectedMode = false }) => {
@@ -215,10 +214,7 @@ const DiseaseReports = ({ forceSelectedMode = false }) => {
     const finalImmediateList = [...immediateDiseasesDisplay, ...extraImmediate];
 
     return (
-        <Layout
-            title={forceSelectedMode ? 'Selected Disease Report' : 'Disease Reporting'}
-            subtitle={forceSelectedMode ? 'Filtered disease report with selection and print' : 'WHO-Aligned Weekly & Monthly Reports'}
-        >
+        <>
             <style type="text/css">
                 {`
                 @media print {
@@ -844,7 +840,7 @@ const DiseaseReports = ({ forceSelectedMode = false }) => {
                     </div>
                 )}
             </div>
-        </Layout>
+        </>
     );
 };
 

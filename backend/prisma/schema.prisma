@@ -75,6 +75,7 @@ model User {
   admissionServicesOrdered   AdmissionService[]          @relation("AdmissionServicesOrdered")
   compoundPrescriptions      CompoundPrescription[]
   externalDiagnosticOrders   ExternalDiagnosticOrder[]
+  commissions                DoctorCommission[]
 
   @@index([role])
   @@index([availability])
@@ -962,6 +963,18 @@ model NurseAdministration {
   completed            Boolean            @default(false)
   administeredBy       User?              @relation(fields: [administeredById], references: [id])
   continuousInfusion   ContinuousInfusion @relation(fields: [continuousInfusionId], references: [id])
+}
+
+model CardProduct {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  regPrice    Float
+  actPrice    Float
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model CardActivation {
@@ -2309,4 +2322,113 @@ model AdmissionService {
   admission       Admission   @relation(fields: [admissionId], references: [id])
   service         Service     @relation(fields: [serviceId], references: [id])
   orderedBy       User        @relation("AdmissionServicesOrdered", fields: [orderedById], references: [id])
+}
+
+model DoctorCommission {
+  id              String          @id @default(uuid())
+  doctorId        String
+  serviceCategory ServiceCategory
+  percentage      Float           @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  doctor          User            @relation(fields: [doctorId], references: [id])
+
+  @@unique([doctorId, serviceCategory])
+  @@index([doctorId])
+}
+
+model ClinicSetting {
+  id       Int    @id @default(autoincrement())
+  name     String
+  tagline  String
+  logoUrl  String
+}
+
+model FamilyPlanningRecord {
+  id                String   @id @default(uuid())
+  patientId         String
+  visitId           String?
+  mrn               String?
+  name              String?
+  age               Int?
+  sex               String?
+  regDate           DateTime @default(now())
+  isNewAcceptor     Boolean  @default(true)
+  isRepeatAcceptor  Boolean  @default(false)
+  hivTestOffered    Boolean  @default(false)
+  hivTestPerformed  Boolean  @default(false)
+  hivTestResult     String?
+  hivCounselingOffered Boolean @default(false)
+  hivPositiveLinkedART Boolean @default(false)
+  targetPopulation  String?
+  tdStatusChecked   Boolean  @default(false)
+  contraindicationIUCD Boolean @default(false)
+  contraceptiveProvided String?
+  referralSource    String?
+  notes             String?
+  createdById       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([visitId])
+  @@index([regDate])
+}
+
+model FamilyPlanningVisit {
+  id                    String   @id @default(uuid())
+  recordId              String
+  visitDate             DateTime @default(now())
+  visitNo              Int?
+  contraceptiveProvided String?
+  appointmentDate       DateTime?
+  referredFrom         String?
+  followUpNote          String?
+  createdById          String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([recordId])
+}
+
+model AbortionCareRecord {
+  id                        String   @id @default(uuid())
+  patientId                 String
+  visitId                   String?
+  mrn                       String?
+  age                       Int?
+  gravida                   Int?
+  para                      Int?
+  gestationalAgeWeeks        Int?
+  careType                  String?
+  procedureType             String?
+  managedAsOutpatient       Boolean  @default(true)
+  managedAsInpatient        Boolean  @default(false)
+  referred                  Boolean  @default(false)
+  drugsProvided             String?
+  hivTestAccepted           Boolean  @default(false)
+  hivTestResult             String?
+  hivTestReceivedCounselling Boolean @default(false)
+  hivPositiveLinkedART      Boolean  @default(false)
+  postAbortionContraceptiveNew    Boolean @default(false)
+  postAbortionContraceptiveRepeat Boolean @default(false)
+  postAbortionContraceptiveMethod String?
+  death                     Boolean  @default(false)
+  complications             Boolean  @default(false)
+  complicationDetails       String?
+  safeAbortionReason        String?
+  postAbortionDiagnosis     String?
+  otherServiceCode          String?
+  referralSource            String?
+  serviceProviderName       String?
+  serviceProviderSignature  String?
+  createdById               String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([visitId])
+  @@index([careType])
+  @@index([createdAt])
 }

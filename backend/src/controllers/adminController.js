@@ -1,8 +1,10 @@
 const prisma = require('../config/database');
 const { z } = require('zod');
 const bcrypt = require('bcryptjs');
+const { getDefaultClinicName } = require('../utils/pdfGenerator');
+const { buildCardBucketEntries, getCardProducts, extractSlugFromServiceCode } = require('../utils/cardBucketHelper');
 
-const REPORT_SERVICE_BUCKETS = {
+const STATIC_SERVICE_BUCKETS = {
   LAB: 'Lab',
   LAB_WALKIN: 'Lab Walk-in',
   RADIOLOGY: 'Radiology',
@@ -10,10 +12,6 @@ const REPORT_SERVICE_BUCKETS = {
   PROCEDURE: 'Procedure',
   NURSE_SERVICES: 'Nurse Services',
   NURSE_WALKIN: 'Nurse Walk-in',
-  CARD_CREATED_GENERAL: 'Medical Card Created',
-  CARD_CREATED_DERMATOLOGY: 'Dermatology Card Created',
-  CARD_REACTIVATION_GENERAL: 'Medical Card Reactivation',
-  CARD_REACTIVATION_DERMATOLOGY: 'Dermatology Card Reactivation',
   CONSULTATION_GENERAL: 'Consultation (Medical)',
   CONSULTATION_DERMATOLOGY: 'Consultation (Dermatology)',
   MATERIAL_NEEDS: 'Material Needs',
@@ -21,11 +19,13 @@ const REPORT_SERVICE_BUCKETS = {
   OTHER: 'Other Services'
 };
 
-const EMPTY_BUCKET_TOTALS = () =>
-  Object.keys(REPORT_SERVICE_BUCKETS).reduce((acc, key) => {
-    acc[key] = 0;
-    return acc;
-  }, {});
+let _cardBucketLabels = null;
+const getCardBucketLabels = async () => {
+  if (_cardBucketLabels) return _cardBucketLabels;
+  _cardBucketLabels = await buildCardBucketEntries({});
+  return _cardBucketLabels;
+};
+const invalidateCardBucketLabels = () => { _cardBucketLabels = null; };
 
 const getServiceBucketKey = (service) => {
   if (!service) return 'OTHER';
@@ -35,10 +35,13 @@ const getServiceBucketKey = (service) => {
   const category = service.category;
   const isDerm = code.includes('DERM') || name.includes('DERM') || name.includes('SKIN');
 
+  // Card services: extract slug from code for dynamic bucket keys
+  if (code.startsWith('CARD-REG-')) return 'CARD_CREATED_' + code.replace('CARD-REG-', '');
+  if (code.startsWith('CARD-ACT-')) return 'CARD_REACTIVATION_' + code.replace('CARD-ACT-', '');
+  // Fallback for non-standard card service codes
   if (code.startsWith('CARD-REG') || name.includes('CARD REGISTRATION') || name.includes('CARD CREATED')) {
     return isDerm ? 'CARD_CREATED_DERMATOLOGY' : 'CARD_CREATED_GENERAL';
   }
-
   if (code.startsWith('CARD-ACT') || name.includes('CARD ACTIVATION') || name.includes('CARD REACTIVATION') || name.includes('CARD RENEWAL')) {
     return isDerm ? 'CARD_REACTIVATION_DERMATOLOGY' : 'CARD_REACTIVATION_GENERAL';
   }
@@ -52,6 +55,16 @@ const getServiceBucketKey = (service) => {
   if (category === 'CONSULTATION') return isDerm ? 'CONSULTATION_DERMATOLOGY' : 'CONSULTATION_GENERAL';
 
   return 'OTHER';
+};
+
+const EMPTY_BUCKET_TOTALS = (extraKeys = []) => {
+  const allKeys = [...new Set([...Object.keys(STATIC_SERVICE_BUCKETS), ...extraKeys])];
+  return allKeys.reduce((acc, key) => { acc[key] = 0; return acc; }, {});
+};
+
+const EMPTY_BUCKET_TOTALS_ASYNC = async () => {
+  const cardLabels = await getCardBucketLabels();
+  return EMPTY_BUCKET_TOTALS(Object.keys(cardLabels));
 };
 
 const allocateBillingAmountByBucket = (billing, paidAmount) => {
@@ -166,10 +179,21 @@ const allocateBillingAmountWithWalkInSplit = (billing, paidAmount, walkInFlags =
 };
 
 const getCardServiceUsageCounts = async (startDate, endDate, doctorIds = []) => {
+  const cardProducts = await getCardProducts();
   const usage = {
-    opened: { medical: 0, dermatology: 0, total: 0 },
-    activation: { medical: 0, dermatology: 0, total: 0 }
+    opened: {},
+    activation: {},
+    total: 0,
+    details: { opened: {}, activation: {} }
   };
+
+  for (const product of cardProducts) {
+    const slug = (product.slug || '').toUpperCase();
+    usage.opened[slug] = 0;
+    usage.activation[slug] = 0;
+  }
+  usage.opened._total = 0;
+  usage.activation._total = 0;
 
   const scopedDoctorIds = Array.isArray(doctorIds) ? doctorIds.filter(Boolean) : [];
   let assignmentIds = [];
@@ -194,8 +218,6 @@ const getCardServiceUsageCounts = async (startDate, endDate, doctorIds = []) => 
     }
     : {};
 
-  // Count card usage by payment date (not billing line creation date) so daily reports
-  // reflect what was actually processed at billing on that day.
   const paymentTransactions = await prisma.cashTransaction.findMany({
     where: {
       type: 'PAYMENT_RECEIVED',
@@ -251,34 +273,32 @@ const getCardServiceUsageCounts = async (startDate, endDate, doctorIds = []) => 
         name.includes('CARD REACTIVATION') ||
         name.includes('CARD RENEWAL');
 
-      if (!isCardOpened && !isCardActivation) {
-        continue;
-      }
+      if (!isCardOpened && !isCardActivation) continue;
 
-      const isDermatology = code.includes('DERM') || name.includes('DERM') || name.includes('SKIN');
       const quantity = Number(line.quantity) > 0 ? Number(line.quantity) : 1;
 
-      if (isCardOpened) {
-        if (isDermatology) {
-          usage.opened.dermatology += quantity;
-        } else {
-          usage.opened.medical += quantity;
-        }
+      let slug = extractSlugFromServiceCode(code);
+      if (!slug || !usage.opened.hasOwnProperty(slug)) {
+        const c = (code || '').toUpperCase();
+        const n = (name || '').toUpperCase();
+        const isDerm = c.includes('DERM') || n.includes('DERM') || n.includes('SKIN');
+        slug = isDerm ? 'DERMATOLOGY' : 'GENERAL';
       }
 
+      if (isCardOpened) {
+        if (!usage.opened.hasOwnProperty(slug)) usage.opened[slug] = 0;
+        usage.opened[slug] += quantity;
+        usage.opened._total += quantity;
+      }
       if (isCardActivation) {
-        if (isDermatology) {
-          usage.activation.dermatology += quantity;
-        } else {
-          usage.activation.medical += quantity;
-        }
+        if (!usage.activation.hasOwnProperty(slug)) usage.activation[slug] = 0;
+        usage.activation[slug] += quantity;
+        usage.activation._total += quantity;
       }
     }
   }
 
-  usage.opened.total = usage.opened.medical + usage.opened.dermatology;
-  usage.activation.total = usage.activation.medical + usage.activation.dermatology;
-
+  usage.total = usage.opened._total + usage.activation._total;
   return usage;
 };
 
@@ -343,9 +363,11 @@ const createUserSchema = z.object({
   phone: z.string().optional(),
   role: z.enum(['ADMIN', 'OWNER', 'BILLING_OFFICER', 'PHARMACY_BILLING_OFFICER', 'CARE_COORDINATOR', 'CMO', 'CLINICAL_RESEARCH_COORDINATOR', 'DIETITIAN', 'DOCTOR', 'HOSPITAL_MANAGER', 'HR_OFFICER', 'IT_SUPPORT', 'LAB_TECHNICIAN', 'MEDICAL_RECORDS_OFFICER', 'NURSE', 'PATIENT', 'PHARMACY_OFFICER', 'PHARMACIST', 'RADIOLOGIST', 'RECEPTIONIST', 'SECURITY_STAFF', 'SOCIAL_WORKER']),
   qualifications: z.array(z.string()).optional(),
+  specialty: z.string().optional(),
   licenseNumber: z.string().optional(),
   consultationFee: z.number().optional(),
   waiveConsultationFee: z.boolean().optional(),
+  requiredCardType: z.string().optional(),
 });
 
 const createServiceSchema = z.object({
@@ -502,6 +524,20 @@ exports.createUser = async (req, res) => {
   }
 };
 
+async function retryQuery(queryFn, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await queryFn();
+    } catch (error) {
+      if (error.message?.includes('Server has closed the connection') && i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 exports.getUsers = async (req, res) => {
   try {
     const { role } = req.query;
@@ -511,108 +547,31 @@ exports.getUsers = async (req, res) => {
       whereClause.role = role;
     }
 
-    try {
-      const users = await prisma.user.findMany({
-        where: whereClause,
-        select: {
-          id: true,
-          fullname: true,
-          username: true,
-          email: true,
-          phone: true,
-          role: true,
-          qualifications: true,
-          licenseNumber: true,
-          consultationFee: true,
-          waiveConsultationFee: true,
-          availability: true,
-          isActive: true,
-          passwordChangedAt: true,
-          createdAt: true
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+    const users = await retryQuery(() => prisma.user.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        fullname: true,
+        username: true,
+        email: true,
+        phone: true,
+        role: true,
+        qualifications: true,
+        licenseNumber: true,
+        consultationFee: true,
+        waiveConsultationFee: true,
+        availability: true,
+        isActive: true,
+        passwordChangedAt: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' }
+    }));
 
-      res.json({ users });
-    } catch (dbError) {
-      console.log('Database not available, returning mock users data');
-
-      // Fallback mock data when database is not available
-      const mockUsers = [
-        {
-          id: 'f4bfc674-0598-47b1-9d7f-ae1784afdfb6',
-          fullname: 'System Administrator',
-          username: 'admin',
-          email: 'admin@clinic.com',
-          phone: null,
-          role: 'ADMIN',
-          qualifications: [],
-          licenseNumber: null,
-          consultationFee: null,
-          availability: true,
-          createdAt: new Date('2025-09-30T21:22:59.046Z')
-        },
-        {
-          id: '8ef8017b-9117-4571-bd45-86a64565bc4b',
-          fullname: 'Dr. Sarah Johnson',
-          username: 'doctor1',
-          email: 'doctor1@clinic.com',
-          phone: '0912345678',
-          role: 'DOCTOR',
-          qualifications: ['General Medicine'],
-          licenseNumber: 'DOC123456',
-          consultationFee: 500,
-          availability: true,
-          createdAt: new Date('2025-09-30T21:22:59.046Z')
-        },
-        {
-          id: '533c4c75-983d-452a-adcb-8091bb3bd03b',
-          fullname: 'Pharmacy Staff',
-          username: 'pharmacy',
-          email: 'pharmacy@clinic.com',
-          phone: '0912345679',
-          role: 'PHARMACIST',
-          qualifications: [],
-          licenseNumber: null,
-          consultationFee: null,
-          availability: true,
-          createdAt: new Date('2025-09-30T21:22:59.046Z')
-        },
-        {
-          id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-          fullname: 'Nurse Jane',
-          username: 'nurse',
-          email: 'nurse@clinic.com',
-          phone: '0912345680',
-          role: 'NURSE',
-          qualifications: ['General Nursing'],
-          licenseNumber: 'NUR123456',
-          consultationFee: null,
-          availability: true,
-          createdAt: new Date('2025-09-30T21:22:59.046Z')
-        },
-        {
-          id: 'b2c3d4e5-f6g7-8901-bcde-f23456789012',
-          fullname: 'Billing Staff',
-          username: 'billing',
-          email: 'billing@clinic.com',
-          phone: '0912345681',
-          role: 'BILLING_OFFICER',
-          qualifications: [],
-          licenseNumber: null,
-          consultationFee: null,
-          availability: true,
-          createdAt: new Date('2025-09-30T21:22:59.046Z')
-        }
-      ];
-
-      // Filter by role if specified
-      const filteredUsers = role ? mockUsers.filter(user => user.role === role) : mockUsers;
-
-      res.json({ users: filteredUsers });
-    }
+    res.json({ users: users || [] });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('❌ [getUsers] Error:', error);
+    res.status(500).json({ error: 'Failed to fetch users', details: error.message });
   }
 };
 
@@ -2229,7 +2188,7 @@ exports.getRevenueStats = async (req, res) => {
       }
     });
 
-    const medicalCategoryBreakdown = EMPTY_BUCKET_TOTALS();
+    const medicalCategoryBreakdown = await EMPTY_BUCKET_TOTALS_ASYNC();
     const walkInFlagsByBilling = await buildWalkInBillingFlags(medicalTransactions.map((tx) => tx.billingId));
 
     medicalTransactions.forEach((tx) => {
@@ -2379,7 +2338,7 @@ exports.exportFinancialReportExcel = async (req, res) => {
     }
 
     const csvContent = [
-      'Charite Medium Clinic - Financial Report',
+      `${getDefaultClinicName()} - Financial Report`,
       `Period: ${period === 'daily' ? 'Daily' : `${getMonthName(month)} ${year}`}`,
       `Revenue Type: ${revenueType}`,
       `Generated: ${new Date().toLocaleString()}`,
@@ -2488,7 +2447,7 @@ exports.exportFinancialReportPDF = async (req, res) => {
       pageMargins: [40, 60, 40, 60],
       content: [
         {
-          text: 'Charite Medium Clinic',
+          text: getDefaultClinicName(),
           style: 'clinicName',
           alignment: 'center',
           margin: [0, 0, 0, 10]
@@ -2794,7 +2753,7 @@ exports.getDailyBreakdown = async (req, res) => {
         }
       });
 
-      const medicalCategoryBreakdown = EMPTY_BUCKET_TOTALS();
+      const medicalCategoryBreakdown = await EMPTY_BUCKET_TOTALS_ASYNC();
       const walkInFlagsByBilling = await buildWalkInBillingFlags(medicalTransactions.map((tx) => tx.billingId));
 
       medicalTransactions.forEach((tx) => {
@@ -3684,6 +3643,7 @@ exports.getBillingPerformanceStats = async (req, res) => {
     const usersMap = new Map();
     const walkInFlagsByBilling = await buildWalkInBillingFlags(transactions.map((tx) => tx.billingId));
 
+    const bucketTotals = await EMPTY_BUCKET_TOTALS_ASYNC();
     // Initialize all billing users so zero-activity users still appear in the UI list.
     billingUsers.forEach((u) => {
       usersMap.set(u.id, {
@@ -3692,7 +3652,7 @@ exports.getBillingPerformanceStats = async (req, res) => {
         role: u.role,
         totalAmount: 0,
         totalTransactions: 0,
-        categoryBreakdown: EMPTY_BUCKET_TOTALS()
+        categoryBreakdown: { ...bucketTotals }
       });
     });
 
@@ -3708,7 +3668,7 @@ exports.getBillingPerformanceStats = async (req, res) => {
           role: tx.processedBy.role,
           totalAmount: 0,
           totalTransactions: 0,
-          categoryBreakdown: EMPTY_BUCKET_TOTALS()
+          categoryBreakdown: { ...bucketTotals }
         });
       }
 
@@ -3789,7 +3749,7 @@ exports.getBillingUserDailyBreakdown = async (req, res) => {
         }
       });
 
-      const categoryBreakdown = EMPTY_BUCKET_TOTALS();
+      const categoryBreakdown = await EMPTY_BUCKET_TOTALS_ASYNC();
       const walkInFlagsByBilling = await buildWalkInBillingFlags(transactions.map((tx) => tx.billingId));
       transactions.forEach((tx) => {
         const allocation = allocateBillingAmountWithWalkInSplit(
@@ -3811,7 +3771,8 @@ exports.getBillingUserDailyBreakdown = async (req, res) => {
       });
     }
 
-    res.json({ dailyData, buckets: REPORT_SERVICE_BUCKETS });
+    const allBuckets = await getCardBucketLabels();
+    res.json({ dailyData, buckets: { ...STATIC_SERVICE_BUCKETS, ...allBuckets } });
   } catch (error) {
     console.error('Error getting billing user daily breakdown:', error);
     res.status(500).json({ error: error.message });
@@ -3873,7 +3834,7 @@ exports.getBillingUserDayDetails = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    const categoryBreakdown = EMPTY_BUCKET_TOTALS();
+    const categoryBreakdown = await EMPTY_BUCKET_TOTALS_ASYNC();
     const walkInFlagsByBilling = await buildWalkInBillingFlags(transactions.map((tx) => tx.billingId));
     const details = transactions.map((tx) => {
       const walkInFlags = walkInFlagsByBilling.get(tx.billingId);
@@ -3897,7 +3858,7 @@ exports.getBillingUserDayDetails = async (req, res) => {
 
     res.json({
       date,
-      buckets: REPORT_SERVICE_BUCKETS,
+      buckets: await getCardBucketLabels().then(labels => ({ ...STATIC_SERVICE_BUCKETS, ...labels })),
       summary: {
         revenue: details.reduce((sum, item) => sum + item.amount, 0),
         transactions: details.length,
@@ -5544,6 +5505,12 @@ exports.getAllPatients = async (req, res) => {
               accountType: true
             }
           },
+          visits: {
+            where: { status: { notIn: ['COMPLETED', 'CANCELLED'] } },
+            select: { id: true, visitUid: true, status: true, createdAt: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          },
           _count: {
             select: {
               visits: true,
@@ -5560,8 +5527,15 @@ exports.getAllPatients = async (req, res) => {
       prisma.patient.count({ where })
     ]);
 
+    // Add activeVisit field to each patient
+    const patientsWithVisit = patients.map((p) => ({
+      ...p,
+      activeVisit: p.visits?.[0] || null,
+      visits: undefined
+    }));
+
     res.json({
-      patients,
+      patients: patientsWithVisit,
       pagination: {
         total,
         page: parseInt(page),
@@ -6063,77 +6037,400 @@ exports.deleteMultiplePatients = async (req, res) => {
   }
 };
 
-exports.completePatientVisits = async (req, res) => {
+// Complete a patient's active visit
+exports.completePatientVisit = async (req, res) => {
   try {
     const { patientId } = req.params;
+    const patient = await prisma.patient.findUnique({ where: { id: patientId } });
+    if (!patient) return res.status(404).json({ error: 'Patient not found' });
 
-    if (!patientId) {
-      return res.status(400).json({ error: "Patient ID is required" });
-    }
+    const activeVisit = await prisma.visit.findFirst({
+      where: { patientId, status: { notIn: ['COMPLETED', 'CANCELLED'] } },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (!activeVisit) return res.status(400).json({ error: 'No active visit found' });
 
-    const activeStatuses = [
-      "WAITING_FOR_TRIAGE",
-      "TRIAGED",
-      "WAITING_FOR_DOCTOR",
-      "IN_DOCTOR_QUEUE",
-      "UNDER_DOCTOR_REVIEW",
-      "SENT_TO_LAB",
-      "SENT_TO_RADIOLOGY",
-      "SENT_TO_BOTH",
-      "RETURNED_WITH_RESULTS",
-      "AWAITING_LAB_RESULTS",
-      "AWAITING_RADIOLOGY_RESULTS",
-      "AWAITING_RESULTS_REVIEW",
-      "WAITING_FOR_NURSE_SERVICE",
-      "SENT_TO_PHARMACY"
-    ];
-
-    const activeVisits = await prisma.visit.findMany({
-      where: {
-        patientId,
-        status: { in: activeStatuses }
-      }
+    await prisma.visit.update({
+      where: { id: activeVisit.id },
+      data: { status: 'COMPLETED', completedAt: new Date() }
     });
 
-    if (activeVisits.length === 0) {
-      return res.status(404).json({ error: "No active visits found", message: "This patient does not have any active visits to complete" });
-    }
-
-    const completedVisits = [];
-    for (const visit of activeVisits) {
-      await prisma.visit.update({
-        where: { id: visit.id },
-        data: { status: "COMPLETED" }
-      });
-      completedVisits.push({ id: visit.id, visitUid: visit.visitUid, previousStatus: visit.status });
-    }
-
-    const visitDetails = completedVisits.map(function(v) {
-      return { visitUid: v.visitUid, from: v.previousStatus, to: "COMPLETED" };
-    });
-
-    await prisma.auditLog.create({
-      data: {
-        action: "ADMIN_COMPLETE_VISIT",
-        entity: "Visit",
-        entityId: activeVisits[0].id,
-        userId: req.user.id,
-        details: JSON.stringify({
-          patientId,
-          completedVisits: visitDetails,
-          count: completedVisits.length
-        })
-      }
-    });
-
-    res.json({
-      message: completedVisits.length + " active visit(s) completed successfully",
-      completedVisits: completedVisits.map(function(v) {
-        return { visitUid: v.visitUid, previousStatus: v.previousStatus, newStatus: "COMPLETED" };
-      })
-    });
+    res.json({ message: 'Visit completed', visitId: activeVisit.id, visitUid: activeVisit.visitUid });
   } catch (error) {
-    console.error("Error completing patient visits:", error);
+    console.error('Error completing visit:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Card Products Management
+exports.getCardProducts = async (req, res) => {
+  try {
+    const cardProducts = await prisma.cardProduct.findMany({
+      orderBy: { name: 'asc' }
+    });
+    res.json({ cardProducts });
+  } catch (error) {
+    console.error('Error fetching card products:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.createCardProduct = async (req, res) => {
+  try {
+    const { name, slug, regPrice, actPrice, description } = req.body;
+
+    if (!name || !slug || regPrice === undefined || actPrice === undefined) {
+      return res.status(400).json({ error: 'name, slug, regPrice, and actPrice are required' });
+    }
+
+    const existing = await prisma.cardProduct.findUnique({ where: { slug } });
+    if (existing) {
+      return res.status(400).json({ error: `Card product with slug "${slug}" already exists` });
+    }
+
+    const cardProduct = await prisma.cardProduct.create({
+      data: { name, slug: slug.toUpperCase(), regPrice, actPrice, description }
+    });
+
+    res.status(201).json({ cardProduct });
+  } catch (error) {
+    console.error('Error creating card product:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateCardProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, slug, regPrice, actPrice, description, isActive } = req.body;
+
+    const existing = await prisma.cardProduct.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Card product not found' });
+    }
+
+    const data = {};
+    if (name !== undefined) data.name = name;
+    if (slug !== undefined) data.slug = slug.toUpperCase();
+    if (regPrice !== undefined) data.regPrice = regPrice;
+    if (actPrice !== undefined) data.actPrice = actPrice;
+    if (description !== undefined) data.description = description;
+    if (isActive !== undefined) data.isActive = isActive;
+
+    const cardProduct = await prisma.cardProduct.update({ where: { id }, data });
+
+    res.json({ cardProduct });
+  } catch (error) {
+    console.error('Error updating card product:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.deleteCardProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await prisma.cardProduct.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Card product not found' });
+    }
+
+    await prisma.cardProduct.update({
+      where: { id },
+      data: { isActive: false }
+    });
+
+    res.json({ message: 'Card product deactivated' });
+  } catch (error) {
+    console.error('Error deactivating card product:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getClinicSettings = async (req, res) => {
+  try {
+    let settings = await prisma.clinicSetting.findFirst();
+    if (!settings) {
+      settings = await prisma.clinicSetting.create({
+        data: { name: 'Clinic', tagline: 'Quality Healthcare You Can Trust', logoUrl: '/clinic-logo.jpg' }
+      });
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error('Error fetching clinic settings:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateClinicSettings = async (req, res) => {
+  try {
+    const { name, tagline } = req.body;
+    let settings = await prisma.clinicSetting.findFirst();
+    if (!settings) {
+      settings = await prisma.clinicSetting.create({
+        data: { name: name || 'Clinic', tagline: tagline || 'Quality Healthcare You Can Trust', logoUrl: '/clinic-logo.jpg' }
+      });
+    } else {
+      settings = await prisma.clinicSetting.update({
+        where: { id: settings.id },
+        data: { ...(name !== undefined && { name }), ...(tagline !== undefined && { tagline }) }
+      });
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error('Error updating clinic settings:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.uploadClinicLogo = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const logoUrl = '/uploads/' + req.file.filename;
+    let settings = await prisma.clinicSetting.findFirst();
+    if (!settings) {
+      settings = await prisma.clinicSetting.create({
+        data: { name: 'Clinic', tagline: 'Quality Healthcare You Can Trust', logoUrl }
+      });
+    } else {
+      settings = await prisma.clinicSetting.update({
+        where: { id: settings.id },
+        data: { logoUrl }
+      });
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error('Error uploading clinic logo:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getCentralRegister = async (req, res) => {
+  try {
+    const { startDate, endDate, page = 1, limit = 50 } = req.query;
+    const where = {};
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [patients, total] = await Promise.all([
+      prisma.patient.findMany({
+        where,
+        skip,
+        take: parseInt(limit),
+        orderBy: { createdAt: 'desc' },
+        include: {
+          bills: {
+            include: { payments: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          },
+          visits: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { visitUid: true, date: true, status: true }
+          }
+        }
+      }),
+      prisma.patient.count({ where })
+    ]);
+
+    const rows = patients.map(p => {
+      const latestBill = p.bills?.[0];
+      const latestPayment = latestBill?.payments?.[0];
+      const paymentType = latestPayment?.type || 'N/A';
+      return {
+        mrn: p.id,
+        name: p.name,
+        age: p.age || (p.dob ? Math.floor((Date.now() - new Date(p.dob)) / (1000 * 60 * 60 * 24 * 365.25)) : 'N/A'),
+        sex: p.gender,
+        disabilityStatus: p.disabilityStatus || 'N/A',
+        paymentType,
+        regDate: p.createdAt,
+        lastVisit: p.visits?.[0] || null
+      };
+    });
+
+    res.json({ rows, total, page: parseInt(page), totalPages: Math.ceil(total / parseInt(limit)) });
+  } catch (error) {
+    console.error('Error generating central register:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getDiseaseTallySheet = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'startDate and endDate query parameters are required' });
+    }
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: 'Invalid startDate or endDate format' });
+    }
+    end.setHours(23, 59, 59, 999);
+
+    const diagnoses = await prisma.patientDiagnosis.findMany({
+      where: {
+        createdAt: { gte: start, lte: end }
+      },
+      include: {
+        disease: true,
+        patient: { select: { dob: true, gender: true } }
+      }
+    });
+
+    const getAgeGroup = (dob) => {
+      if (!dob) return 'Unknown';
+      const age = (Date.now() - new Date(dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      if (age < 1) return '<1';
+      if (age < 5) return '1-4';
+      if (age < 15) return '5-14';
+      if (age < 30) return '15-29';
+      if (age < 65) return '30-64';
+      return '>=65';
+    };
+
+    const tally = {};
+    for (const d of diagnoses) {
+      const key = d.diseaseId;
+      if (!tally[key]) {
+        tally[key] = {
+          diseaseName: d.disease.name,
+          code: d.disease.code,
+          Female: { '<1': 0, '1-4': 0, '5-14': 0, '15-29': 0, '30-64': 0, '>=65': 0 },
+          Male: { '<1': 0, '1-4': 0, '5-14': 0, '15-29': 0, '30-64': 0, '>=65': 0 }
+        };
+      }
+      const ageGroup = getAgeGroup(d.patient.dob);
+      const gender = d.patient.gender === 'FEMALE' ? 'Female' : 'Male';
+      if (tally[key][gender] && ageGroup in tally[key][gender]) {
+        tally[key][gender][ageGroup]++;
+      }
+    }
+
+    res.json(Object.values(tally));
+  } catch (error) {
+    console.error('Error generating disease tally:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ── Doctor Commissions ─────────────────────────────────────────
+const COMMISSION_CATEGORIES = [
+  'CONSULTATION', 'LAB', 'RADIOLOGY', 'PROCEDURE', 'DENTAL',
+  'TREATMENT', 'EMERGENCY_DRUG', 'NURSE', 'DOCTOR_WALKIN'
+];
+
+exports.getDoctorCommissions = async (req, res) => {
+  try {
+    const doctors = await prisma.user.findMany({
+      where: {
+        OR: [
+          { role: 'DOCTOR' },
+          { qualifications: { hasSome: ['DERMATOLOGY', 'DERMATOLOGIST', 'Dermatology'] } },
+        ],
+        isActive: true,
+      },
+      select: {
+        id: true,
+        fullname: true,
+        qualifications: true,
+        consultationFee: true,
+        commissions: true,
+      },
+      orderBy: { fullname: 'asc' },
+    });
+
+    const result = doctors.map(doc => {
+      const commissionMap = {};
+      for (const c of doc.commissions) {
+        commissionMap[c.serviceCategory] = c.percentage;
+      }
+      const commissions = COMMISSION_CATEGORIES.map(cat => ({
+        serviceCategory: cat,
+        percentage: commissionMap[cat] || 0,
+      }));
+      return { id: doc.id, fullname: doc.fullname, qualifications: doc.qualifications, consultationFee: doc.consultationFee, commissions };
+    });
+
+    res.json({ doctors: result, categories: COMMISSION_CATEGORIES });
+  } catch (error) {
+    console.error('Error fetching doctor commissions:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getSingleDoctorCommissions = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const doctor = await prisma.user.findUnique({
+      where: { id: doctorId },
+      select: { id: true, fullname: true, qualifications: true, consultationFee: true, commissions: true },
+    });
+    if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
+
+    const commissionMap = {};
+    for (const c of doctor.commissions) {
+      commissionMap[c.serviceCategory] = c.percentage;
+    }
+    const commissions = COMMISSION_CATEGORIES.map(cat => ({
+      serviceCategory: cat,
+      percentage: commissionMap[cat] || 0,
+    }));
+
+    res.json({ doctor: { id: doctor.id, fullname: doctor.fullname, qualifications: doctor.qualifications, consultationFee: doctor.consultationFee }, commissions, categories: COMMISSION_CATEGORIES });
+  } catch (error) {
+    console.error('Error fetching doctor commissions:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateDoctorCommissions = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const { commissions } = req.body;
+
+    if (!Array.isArray(commissions)) {
+      return res.status(400).json({ error: 'commissions must be an array of { serviceCategory, percentage }' });
+    }
+
+    const doctor = await prisma.user.findUnique({ where: { id: doctorId } });
+    if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
+
+    // Upsert each commission
+    for (const item of commissions) {
+      const cat = String(item.serviceCategory).trim().toUpperCase();
+      if (!COMMISSION_CATEGORIES.includes(cat)) continue;
+      const pct = Math.min(100, Math.max(0, parseFloat(item.percentage) || 0));
+
+      await prisma.doctorCommission.upsert({
+        where: { doctorId_serviceCategory: { doctorId, serviceCategory: cat } },
+        update: { percentage: pct },
+        create: { doctorId, serviceCategory: cat, percentage: pct },
+      });
+    }
+
+    // Return updated
+    const updated = await prisma.user.findUnique({
+      where: { id: doctorId },
+      select: { id: true, fullname: true, commissions: true },
+    });
+    const commissionMap = {};
+    for (const c of updated.commissions) {
+      commissionMap[c.serviceCategory] = c.percentage;
+    }
+    const result = COMMISSION_CATEGORIES.map(cat => ({
+      serviceCategory: cat,
+      percentage: commissionMap[cat] || 0,
+    }));
+
+    res.json({ message: 'Commissions updated', doctorId, commissions: result });
+  } catch (error) {
+    console.error('Error updating doctor commissions:', error);
     res.status(500).json({ error: error.message });
   }
 };

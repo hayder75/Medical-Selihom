@@ -2,6 +2,28 @@ const PdfPrinter = require('pdfmake');
 const fs = require('fs');
 const path = require('path');
 
+// Clinic name will be updated dynamically from DB on first use
+let _clinicName = 'Selihom Medium Clinic';
+let _loadingPromise = null;
+
+function _loadClinicName() {
+  if (!_loadingPromise) {
+    try {
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      _loadingPromise = prisma.clinicSetting.findFirst().then(s => {
+        if (s?.name) _clinicName = s.name;
+        return prisma.$disconnect();
+      }).catch(() => {});
+    } catch {}
+  }
+}
+
+function getDefaultClinicName() {
+  _loadClinicName();
+  return _clinicName;
+}
+
 const fonts = {
   Roboto: {
     normal: 'node_modules/roboto-font/fonts/Roboto/roboto-regular-webfont.ttf',
@@ -91,6 +113,28 @@ const getResponsiveSizes = (paperSize) => {
  * You can place your logo at: backend/uploads/logo.png or backend/public/logo.png
  */
 const getClinicLogo = () => {
+  // First try: look up actual uploaded logo from DB
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    prisma.clinicSetting.findFirst().then(s => {
+      if (s?.logoUrl && s.logoUrl.startsWith('/uploads/')) {
+        const filename = path.basename(s.logoUrl);
+        const uploadedPath = path.join(__dirname, '../../uploads', filename);
+        if (fs.existsSync(uploadedPath)) {
+          const logoBuffer = fs.readFileSync(uploadedPath);
+          const logoBase64 = logoBuffer.toString('base64');
+          const extension = path.extname(uploadedPath).toLowerCase();
+          const mimeType = extension === '.png' ? 'image/png' : 'image/jpeg';
+          prisma.$disconnect();
+          return `data:${mimeType};base64,${logoBase64}`;
+        }
+      }
+      prisma.$disconnect();
+    }).catch(() => {});
+  } catch {}
+
+  // Second try: check known static paths
   const logoPaths = [
     path.join(__dirname, '../../uploads/logo.png'),
     path.join(__dirname, '../../public/logo.png'),
@@ -135,7 +179,7 @@ const createHeader = (clinicName, sizes, logoBase64 = null) => {
         {
           stack: [
             {
-              text: clinicName || 'Charite Medium Clinic',
+              text: clinicName || getDefaultClinicName(),
               style: 'clinicName',
               alignment: 'left',
               margin: [0, 0, 0, 5]
@@ -150,7 +194,7 @@ const createHeader = (clinicName, sizes, logoBase64 = null) => {
     });
   } else {
     headerContent.push({
-      text: clinicName || 'Charite Medium Clinic',
+      text: clinicName || getDefaultClinicName(),
       style: 'clinicName',
       alignment: 'center',
       margin: [0, 0, 0, 5]
@@ -275,7 +319,7 @@ const generatePDF = async (docDefinition, outputPath) => {
 const createPDFDocument = (options = {}) => {
   const {
     paperSize = 'A4',
-    clinicName = 'Charite Medium Clinic',
+    clinicName = getDefaultClinicName(),
     content = [],
     includeLogo = true,
     footerText = null,
@@ -462,6 +506,7 @@ module.exports = {
   createHeader,
   createStyles,
   PAPER_SIZES,
-  printer
+  printer,
+  getDefaultClinicName
 };
 

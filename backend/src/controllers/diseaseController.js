@@ -440,7 +440,42 @@ const getAgeGenderDistribution = async (req, res) => {
     }
 };
 
+const getAllDiseases = async (req, res) => {
+    try {
+        const { page = 1, limit = 50, search = '' } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        
+        const where = search ? {
+            OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { code: { contains: search, mode: 'insensitive' } }
+            ]
+        } : {};
+
+        const [diseases, total] = await Promise.all([
+            prisma.disease.findMany({
+                where,
+                skip,
+                take: parseInt(limit),
+                orderBy: { name: 'asc' }
+            }),
+            prisma.disease.count({ where })
+        ]);
+
+        res.json({
+            diseases,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('Error fetching diseases:', error);
+        res.status(500).json({ error: 'Failed to fetch diseases' });
+    }
+};
+
 module.exports = {
+    getAllDiseases,
     searchDiseases,
     addPatientDiagnosis,
     deletePatientDiagnosis,

@@ -45,7 +45,6 @@ const InternationalMedicalCertificatePage = () => {
         hcg: 'Negative',
         fbsRbs: 'Negative',
         finalAssessment: 'FIT',
-        treatment: '',
         directoryName: ''
     });
 
@@ -95,35 +94,10 @@ const InternationalMedicalCertificatePage = () => {
         setSelectedPatient(patient);
         setPatientSearchQuery(patient.name);
         setPatientResults([]);
-        
-        // Fetch latest completed visit to get medications for treatment
-        try {
-            const visitResponse = await api.get(`/doctors/patient/${patient.id}/visits?status=COMPLETED`);
-            const visits = visitResponse.data.queue || [];
-            const latestVisit = visits.find(v => v.status === 'COMPLETED') || visits[0];
-            
-            if (latestVisit && latestVisit.medicationOrders && latestVisit.medicationOrders.length > 0) {
-                const meds = latestVisit.medicationOrders.map(m => m.medication?.name || m.customName || 'Medication').join(', ');
-                setFormData(prev => ({
-                    ...prev,
-                    patientId: patient.id,
-                    visitId: latestVisit.id,
-                    treatment: meds
-                }));
-            } else {
-                setFormData(prev => ({
-                    ...prev,
-                    patientId: patient.id,
-                    visitId: latestVisit?.id || ''
-                }));
-            }
-        } catch (err) {
-            console.warn('Could not fetch visit medications:', err);
-            setFormData(prev => ({
-                ...prev,
-                patientId: patient.id
-            }));
-        }
+        setFormData(prev => ({
+            ...prev,
+            patientId: patient.id
+        }));
     };
 
     const handleInputChange = (e) => {
@@ -184,7 +158,6 @@ const InternationalMedicalCertificatePage = () => {
             hcg: 'Negative',
             fbsRbs: 'Negative',
             finalAssessment: 'FIT',
-        treatment: '',
             directoryName: ''
         });
     };
@@ -202,30 +175,34 @@ const InternationalMedicalCertificatePage = () => {
 
     const calculateAge = (dob) => {
         if (!dob) return 'N/A';
-        const today = new Date();
         const birthDate = new Date(dob);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
+        if (Number.isNaN(birthDate.getTime())) return 'N/A';
+        const today = new Date();
+        let years = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) years--;
+        if (years < 0) return 'N/A';
+        if (years === 0) {
+            let months = today.getMonth() - birthDate.getMonth();
+            let days = today.getDate() - birthDate.getDate();
+            if (days < 0) {
+                months--;
+                const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += prevMonth.getDate();
+            }
+            if (months < 0) months = 0;
+            return months === 0 ? `${days}d` : `${months}m ${days}d`;
         }
-        return age;
+        return years;
     };
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        const datePart = dateString.split('T')[0].split(' ')[0];
-        const parts = datePart.split('-');
-        if (parts.length === 3) {
-            const year = parseInt(parts[0]);
-            const month = parseInt(parts[1]) - 1;
-            const day = parseInt(parts[2]);
-            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            return months[month] + ' ' + day + ', ' + year;
-        }
-        const d = new Date(dateString);
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     };
 
     const handlePrint = async (id) => {
@@ -425,10 +402,10 @@ const InternationalMedicalCertificatePage = () => {
                     <div class="container">
                         <div class="header">
                             <div class="header-left">
-                                <img src="/selihom.jpg" alt="" class="logo" onerror="this.style.display='none'">
+                                <img src="${window.__CS__?.logoUrl || '/clinic-logo.jpg'}" alt="" class="logo" onerror="this.style.display='none'">
                                 <div>
-                                    <h1 class="clinic-name">Selihom Medical Clinic</h1>
-                                    <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
+                                    <h1 class="clinic-name">${window.__CS__?.name || 'Clinic'}</h1>
+                                    <p class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</p>
                                 </div>
                             </div>
                         </div>
@@ -528,7 +505,7 @@ const InternationalMedicalCertificatePage = () => {
 
                         <div class="signature-section">
                             <div class="sig-row">
-                                <span>Name of Doctor: <span class="line-field" style="min-width: 250px;">${cert.doctor?.fullname?.toLowerCase().startsWith('dr.') ? cert.doctor?.fullname : `Dr. ${cert.doctor?.fullname}`}${cert.doctor?.qualifications?.length ? ` - ${cert.doctor.qualifications.join(', ')}` : ''}</span></span>
+                                <span>Name of Doctor: <span class="line-field" style="min-width: 250px;">${cert.doctor?.fullname?.toLowerCase().startsWith('dr.') ? cert.doctor?.fullname : `Dr. ${cert.doctor?.fullname}`}</span></span>
                                 <span>Sign: <span class="line-field" style="min-width: 150px;"></span></span>
                             </div>
                         </div>
@@ -798,17 +775,6 @@ const InternationalMedicalCertificatePage = () => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="font-bold text-gray-700">MEDICATIONS / TREATMENT ORDERED:</label>
-                            <textarea
-                                name="treatment"
-                                value={formData.treatment}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 border rounded-lg min-h-\[100px\] text-lg"
-                                placeholder="Enter medications prescribed for treatment..."
-                            />
                         </div>
 
                         <div className="flex justify-end gap-3 pt-6 border-t font-bold">

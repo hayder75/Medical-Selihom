@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { 
-  TestTube, 
+  Scan,
   Calendar, 
   TrendingUp, 
   Users, 
@@ -17,9 +17,7 @@ import {
   Filter,
   X
 } from 'lucide-react';
-
-
-const AdminLabReports = () => {
+const AdminRadiologyReports = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState(null);
@@ -58,7 +56,7 @@ const AdminLabReports = () => {
         endDate = new Date(selected.getFullYear(), selected.getMonth() + 1, 0, 23, 59, 59);
       }
 
-      const response = await api.get('/labs/reports', {
+      const response = await api.get('/radiologies/reports', {
         params: {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
@@ -68,8 +66,8 @@ const AdminLabReports = () => {
       
       setReportData(response.data);
     } catch (error) {
-      console.error('Error fetching lab reports:', error);
-      toast.error('Failed to fetch lab reports');
+      console.error('Error fetching radiology reports:', error);
+      toast.error('Failed to fetch radiology reports');
     } finally {
       setLoading(false);
     }
@@ -123,7 +121,6 @@ const AdminLabReports = () => {
     
     const printWindow = window.open('', '_blank');
     
-    // Group tests by name for summary
     const testSummary = {};
     reportData.tests?.forEach(test => {
       if (!testSummary[test.testName]) {
@@ -149,7 +146,7 @@ const AdminLabReports = () => {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Lab Report - ${getDateRangeLabel()}</title>
+        <title>Radiology Report - ${getDateRangeLabel()}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
@@ -175,18 +172,18 @@ const AdminLabReports = () => {
       </head>
       <body>
         <div class="header">
-          <h1>Medical Clinic Laboratory Report</h1>
+          <h1>Medical Clinic Radiology Report</h1>
           <p>${dateRange.charAt(0).toUpperCase() + dateRange.slice(1)} Report: ${getDateRangeLabel()}</p>
           <p>Generated: ${new Date().toLocaleString()}</p>
         </div>
         
         <div class="summary-grid">
           <div class="summary-item">
-            <div class="label">Total Tests</div>
+            <div class="label">Total Orders</div>
             <div class="value">${reportData.summary?.totalTests || 0}</div>
           </div>
           <div class="summary-item">
-            <div class="label">Walk-in Tests</div>
+            <div class="label">Walk-in Orders</div>
             <div class="value" style="color: #0891b2;">${reportData.summary?.walkInTests || 0}</div>
           </div>
           <div class="summary-item">
@@ -209,12 +206,12 @@ const AdminLabReports = () => {
           ` : ''}
         </div>
         
-        <div class="section-title">Tests Summary (Grouped by Name)</div>
+        <div class="section-title">Orders Summary (Grouped by Name)</div>
         <table>
           <thead>
             <tr>
               <th>#</th>
-              <th>Test Name</th>
+              <th>Order Name</th>
               <th>Category</th>
               <th style="text-align: center;">Total</th>
               <th style="text-align: center;">Completed</th>
@@ -258,26 +255,26 @@ const AdminLabReports = () => {
 
   if (!user || user.role !== 'ADMIN') {
     return (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900">Access Denied</p>
-            <p className="text-gray-500">You don't have permission to view this page.</p>
-          </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-900">Access Denied</p>
+          <p className="text-gray-500">You don't have permission to view this page.</p>
         </div>
+      </div>
     );
   }
 
-  return (<>
+  return (
+    <>
       <div className="p-6">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <TestTube className="h-8 w-8 text-indigo-600" />
-              Lab Reports
+              <Scan className="h-8 w-8 text-indigo-600" />
+              Radiology Reports
             </h1>
-            <p className="text-gray-600 mt-1">View lab test statistics and financial reports</p>
+            <p className="text-gray-600 mt-1">View radiology order statistics and financial reports</p>
           </div>
           
           <button
@@ -290,10 +287,8 @@ const AdminLabReports = () => {
           </button>
         </div>
 
-        {/* Date Controls */}
         <div className="bg-white rounded-xl shadow-sm border p-4 mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* View Type */}
             <div className="flex gap-2">
               {['daily', 'weekly', 'monthly'].map((type) => (
                 <button
@@ -310,7 +305,6 @@ const AdminLabReports = () => {
               ))}
             </div>
 
-            {/* Date Navigation */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => navigateDate(-1)}
@@ -339,24 +333,23 @@ const AdminLabReports = () => {
           </div>
         ) : reportData ? (
           <>
-            {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
               <div className="bg-white rounded-xl shadow-sm border p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Total Tests</p>
+                    <p className="text-sm text-gray-500">Total Orders</p>
                     <p className="text-3xl font-bold text-gray-900 mt-1">
                       {reportData.summary?.totalTests || 0}
                     </p>
                   </div>
-                  <TestTube className="h-10 w-10 text-indigo-500" />
+                  <Scan className="h-10 w-10 text-indigo-500" />
                 </div>
               </div>
 
               <div className="bg-white rounded-xl shadow-sm border p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Walk-in Tests</p>
+                    <p className="text-sm text-gray-500">Walk-in Orders</p>
                     <p className="text-3xl font-bold text-cyan-600 mt-1">
                       {reportData.summary?.walkInTests || 0}
                     </p>
@@ -402,11 +395,10 @@ const AdminLabReports = () => {
               </div>
             </div>
 
-            {/* Financial Summary (Admin only) */}
             {reportData.financialSummary && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div className="bg-green-50 rounded-xl border border-green-200 p-4">
-                  <p className="text-sm text-green-700 font-medium">Paid Tests</p>
+                  <p className="text-sm text-green-700 font-medium">Paid Orders</p>
                   <p className="text-2xl font-bold text-green-800 mt-1">
                     {reportData.financialSummary.paidCount}
                   </p>
@@ -429,7 +421,6 @@ const AdminLabReports = () => {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Daily Breakdown */}
               <div className="bg-white rounded-xl shadow-sm border p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-indigo-600" />
@@ -451,7 +442,7 @@ const AdminLabReports = () => {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-indigo-600">{day.total}</p>
-                          <p className="text-xs text-gray-500">tests</p>
+                          <p className="text-xs text-gray-500">orders</p>
                         </div>
                       </div>
                     ))
@@ -461,7 +452,6 @@ const AdminLabReports = () => {
                 </div>
               </div>
 
-              {/* Category Breakdown */}
               <div className="bg-white rounded-xl shadow-sm border p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-indigo-600" />
@@ -498,51 +488,36 @@ const AdminLabReports = () => {
                 </div>
               </div>
 
-              {/* Technician Breakdown */}
               <div className="bg-white rounded-xl shadow-sm border p-6 lg:col-span-2">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Users className="h-5 w-5 text-indigo-600" />
-                  By Lab Technician
+                  Orders Overview
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {reportData.byTechnician?.length > 0 ? (
-                    reportData.byTechnician.map((tech) => (
-                      <div key={tech.name} className="p-4 bg-gray-50 rounded-xl border">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <Users className="h-5 w-5 text-indigo-600" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">{tech.name}</p>
-                            <p className="text-sm text-gray-500">{tech.completed} completed</p>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-gray-600">Total processed:</span>
-                            <span className="font-bold text-indigo-600">{tech.total}</span>
-                          </div>
-                          <div className="w-full h-2 bg-gray-200 rounded-full">
-                            <div 
-                              className="h-2 bg-green-500 rounded-full"
-                              style={{ width: `${(tech.completed / tech.total) * 100}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-center py-4 col-span-3">No technician data for this period</p>
-                  )}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                    <p className="text-sm text-indigo-700 font-medium">Total Orders</p>
+                    <p className="text-2xl font-bold text-indigo-800">{reportData.summary?.totalTests || 0}</p>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <p className="text-sm text-green-700 font-medium">Completed</p>
+                    <p className="text-2xl font-bold text-green-800">{reportData.summary?.completedTests || 0}</p>
+                  </div>
+                  <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-yellow-700 font-medium">Pending</p>
+                    <p className="text-2xl font-bold text-yellow-800">{reportData.summary?.pendingTests || 0}</p>
+                  </div>
+                  <div className="p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+                    <p className="text-sm text-cyan-700 font-medium">Walk-in</p>
+                    <p className="text-2xl font-bold text-cyan-800">{reportData.summary?.walkInTests || 0}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Detailed Test List with Pagination */}
             <div className="bg-white rounded-xl shadow-sm border p-6 mt-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Filter className="h-5 w-5 text-indigo-600" />
-                Detailed Test List
+                Detailed Order List
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -550,10 +525,10 @@ const AdminLabReports = () => {
                     <tr className="bg-gray-50">
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Date</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Patient</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Test</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Order</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Category</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Doctor</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Technician</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Radiologist</th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
                     </tr>
                   </thead>
@@ -594,11 +569,10 @@ const AdminLabReports = () => {
                   </tbody>
                 </table>
                 
-                {/* Pagination */}
                 {reportData.tests?.length > ITEMS_PER_PAGE && (
                   <div className="flex items-center justify-between mt-4 pt-4 border-t">
                     <p className="text-sm text-gray-500">
-                      Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, reportData.tests.length)} of {reportData.tests.length} tests
+                      Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, reportData.tests.length)} of {reportData.tests.length} orders
                     </p>
                     <div className="flex items-center gap-1">
                       <button
@@ -616,7 +590,6 @@ const AdminLabReports = () => {
                         <ChevronLeft className="h-4 w-4" />
                       </button>
                       
-                      {/* Page Numbers */}
                       {Array.from({ length: Math.ceil(reportData.tests.length / ITEMS_PER_PAGE) }, (_, i) => i + 1)
                         .filter(page => {
                           const totalPages = Math.ceil(reportData.tests.length / ITEMS_PER_PAGE);
@@ -662,14 +635,13 @@ const AdminLabReports = () => {
           </>
         ) : (
           <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
-            <TestTube className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <Scan className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <p className="text-lg font-medium text-gray-900">No Data Available</p>
             <p className="text-gray-500">Select a different date range to view reports</p>
           </div>
         )}
       </div>
 
-      {/* Category Drill-down Modal */}
       {selectedCategory && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
@@ -678,7 +650,7 @@ const AdminLabReports = () => {
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">{selectedCategory.category}</h3>
                   <p className="text-gray-500 mt-1">
-                    {selectedCategory.total} total tests • {selectedCategory.completed} completed
+                    {selectedCategory.total} total orders • {selectedCategory.completed} completed
                   </p>
                 </div>
                 <button
@@ -693,7 +665,7 @@ const AdminLabReports = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Test Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Order Name</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-gray-600">Count</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-gray-600">Status</th>
                   </tr>
@@ -741,8 +713,8 @@ const AdminLabReports = () => {
           </div>
         </div>
       )}
-  </>
+    </>
   );
 };
 
-export default AdminLabReports;
+export default AdminRadiologyReports;

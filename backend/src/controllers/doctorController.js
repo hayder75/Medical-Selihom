@@ -666,8 +666,34 @@ exports.getResultsQueue = async (req, res) => {
       ]
     });
 
-    // Add result type labels and include radiology/lab results for each visit
-    const queueWithLabels = await Promise.all(resultsQueue.map(async (visit) => {
+    // Batch fetch all radiology and lab results for all batch orders
+    const allBatchOrderIds = resultsQueue.flatMap(v => v.batchOrders.map(b => b.id));
+
+    const [allRadiologyResults, allLabResults] = await Promise.all([
+      prisma.radiologyResult.findMany({
+        where: { batchOrderId: { in: allBatchOrderIds } },
+        include: { testType: true, attachments: true }
+      }),
+      prisma.detailedLabResult.findMany({
+        where: { labOrderId: { in: allBatchOrderIds } },
+        include: { template: true },
+        orderBy: { createdAt: 'desc' }
+      })
+    ]);
+
+    const radiologyByBatchId = {};
+    allRadiologyResults.forEach(r => {
+      if (!radiologyByBatchId[r.batchOrderId]) radiologyByBatchId[r.batchOrderId] = [];
+      radiologyByBatchId[r.batchOrderId].push(r);
+    });
+
+    const labByBatchId = {};
+    allLabResults.forEach(r => {
+      if (!labByBatchId[r.labOrderId]) labByBatchId[r.labOrderId] = [];
+      labByBatchId[r.labOrderId].push(r);
+    });
+
+    const queueWithLabels = resultsQueue.map((visit) => {
       let resultLabels = [];
 
       if (visit.labOrders.some(order => order.labResults.length > 0)) {
@@ -682,23 +708,13 @@ exports.getResultsQueue = async (req, res) => {
         resultLabels.push('Batch Results Available');
       }
 
-      // Add radiology and lab results to batch orders
-      const batchOrdersWithResults = await Promise.all(visit.batchOrders.map(async (batchOrder) => {
-        let radiologyResults = [];
+      const batchOrdersWithResults = visit.batchOrders.map((batchOrder) => {
+        let radiologyResults = radiologyByBatchId[batchOrder.id] || [];
         let labResults = [];
 
         if (batchOrder.type === 'RADIOLOGY') {
-          radiologyResults = await prisma.radiologyResult.findMany({
-            where: { batchOrderId: batchOrder.id },
-            include: {
-              testType: true,
-              attachments: true
-            }
-          });
-
-          // Also add batch order level results if individual results don't exist
           if (radiologyResults.length === 0 && batchOrder.result) {
-            radiologyResults.push({
+            radiologyResults = [{
               id: `batch-${batchOrder.id}`,
               testType: { name: 'Radiology Tests' },
               resultText: batchOrder.result,
@@ -706,23 +722,13 @@ exports.getResultsQueue = async (req, res) => {
               status: batchOrder.status,
               attachments: batchOrder.attachments || [],
               createdAt: batchOrder.updatedAt || batchOrder.createdAt
-            });
+            }];
           }
         }
 
         if (batchOrder.type === 'LAB') {
-          // Get detailed lab results from DetailedLabResult table
-          const detailedLabResults = await prisma.detailedLabResult.findMany({
-            where: {
-              labOrderId: batchOrder.id
-            },
-            include: {
-              template: true
-            },
-            orderBy: { createdAt: 'desc' }
-          });
+          const detailedLabResults = labByBatchId[batchOrder.id] || [];
 
-          // Group results by service for better organization
           const resultsByService = {};
           detailedLabResults.forEach(result => {
             const serviceKey = result.serviceId || 'unknown';
@@ -732,11 +738,9 @@ exports.getResultsQueue = async (req, res) => {
             resultsByService[serviceKey].push(result);
           });
 
-          // Convert detailed lab results to the expected format, grouped by service
           Object.keys(resultsByService).forEach(serviceId => {
             const serviceResults = resultsByService[serviceId];
             serviceResults.forEach(result => {
-              // Get service name from batch order services
               const service = batchOrder.services.find(s => s.id === parseInt(serviceId));
               const serviceName = service ? service.service.name : 'Unknown Service';
 
@@ -749,10 +753,10 @@ exports.getResultsQueue = async (req, res) => {
                   category: result.template.category
                 },
                 resultText: `Detailed results for ${result.template.name}`,
-                detailedResults: result.results, // Include the actual detailed results
+                detailedResults: result.results,
                 additionalNotes: result.additionalNotes || '',
                 status: result.status,
-                attachments: [], // Detailed lab results don't have separate attachments
+                attachments: [],
                 createdAt: result.createdAt,
                 verifiedBy: result.verifiedBy,
                 verifiedAt: result.verifiedAt,
@@ -761,7 +765,6 @@ exports.getResultsQueue = async (req, res) => {
             });
           });
 
-          // If no detailed results, fall back to batch order result
           if (labResults.length === 0) {
             labResults.push({
               id: `batch-${batchOrder.id}`,
@@ -784,14 +787,14 @@ exports.getResultsQueue = async (req, res) => {
           radiologyResults,
           labResults
         };
-      }));
+      });
 
       return {
         ...visit,
         batchOrders: batchOrdersWithResults,
         resultLabels
       };
-    }));
+    });
 
     // Filter to only show visits assigned to this doctor
     const doctorAssignments = await prisma.assignment.findMany({

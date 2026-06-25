@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   CreditCard,
   User,
@@ -102,6 +102,13 @@ const BillingQueue = () => {
       setOldPatientModeEnabled(false);
     }
   }, []);
+
+  const pollRef = useRef(null);
+
+  useEffect(() => {
+    pollRef.current = setInterval(fetchBillings, 30000);
+    return () => clearInterval(pollRef.current);
+  }, [fetchBillings]);
 
   useEffect(() => {
     fetchBillings();

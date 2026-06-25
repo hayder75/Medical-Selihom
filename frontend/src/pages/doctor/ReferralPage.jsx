@@ -171,30 +171,34 @@ const ReferralPage = () => {
 
     const calculateAge = (dob) => {
         if (!dob) return 'N/A';
-        const today = new Date();
         const birthDate = new Date(dob);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
+        if (Number.isNaN(birthDate.getTime())) return 'N/A';
+        const today = new Date();
+        let years = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) years--;
+        if (years < 0) return 'N/A';
+        if (years === 0) {
+            let months = today.getMonth() - birthDate.getMonth();
+            let days = today.getDate() - birthDate.getDate();
+            if (days < 0) {
+                months--;
+                const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += prevMonth.getDate();
+            }
+            if (months < 0) months = 0;
+            return months === 0 ? `${days}d` : `${months}m ${days}d`;
         }
-        return age;
+        return years;
     };
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        const datePart = dateString.split('T')[0].split(' ')[0];
-        const parts = datePart.split('-');
-        if (parts.length === 3) {
-            const year = parseInt(parts[0]);
-            const month = parseInt(parts[1]) - 1;
-            const day = parseInt(parts[2]);
-            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            return months[month] + ' ' + day + ', ' + year;
-        }
-        const d = new Date(dateString);
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     };
 
     const handlePrint = async (id) => {
@@ -223,79 +227,91 @@ const ReferralPage = () => {
                         @media print {
                             @page { 
                                 size: A4;
-                                margin: 0;
+                                margin: 15mm 20mm;
                             }
                             body { margin: 0; padding: 0; }
                         }
                         body { 
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                            font-family: 'Times New Roman', Times, serif; 
                             margin: 0; 
                             padding: 0;
-                            color: #333;
-                            line-height: 1.4;
+                            color: #1a1a1a;
+                            line-height: 1.5;
                             background: white;
+                            font-size: 12pt;
                         }
                         .container {
-                            padding: 15mm 15mm;
+                            padding: 0;
                             min-height: 297mm;
                         }
                         .header { 
                             display: flex;
                             align-items: center;
                             justify-content: space-between;
-                            padding-bottom: 10px; 
-                            margin-bottom: 15px; 
-                            border-bottom: 3px solid #2563eb;
+                            padding-bottom: 12pt; 
+                            margin-bottom: 18pt; 
+                            border-bottom: 2pt solid #1e3a5f;
                         }
                         .header-left {
                             display: flex;
                             align-items: center;
-                            gap: 15px;
+                            gap: 12pt;
                         }
                         .logo {
-                            width: 80px;
-                            height: 80px;
+                            width: 70pt;
+                            height: 70pt;
                             object-fit: contain;
                         }
                         .clinic-name { 
-                            font-size: 28px; 
+                            font-size: 22pt; 
                             font-weight: 800; 
                             margin: 0;
-                            color: #1e40af;
+                            color: #1e3a5f;
+                            font-family: 'Segoe UI', Arial, sans-serif;
                         }
                         .clinic-tagline {
-                            font-size: 13px;
-                            color: #64748b;
+                            font-size: 10pt;
+                            color: #555;
                             margin: 0;
                             font-style: italic;
+                            font-family: 'Segoe UI', Arial, sans-serif;
                         }
                         .report-title { 
-                            font-size: 24px; 
+                            font-size: 16pt; 
                             font-weight: 700; 
-                            color: #0f172a;
+                            color: #1a1a1a;
                             text-transform: uppercase;
                             text-align: right;
+                            margin: 0;
+                            font-family: 'Segoe UI', Arial, sans-serif;
+                        }
+                        .report-date {
+                            font-size: 9pt;
+                            color: #666;
+                            text-align: right;
+                            font-family: 'Segoe UI', Arial, sans-serif;
                         }
                         .patient-section {
-                            margin: 20px 0;
-                            padding: 15px;
-                            background: #f8fafc;
-                            border: 1px solid #e2e8f0;
-                            border-radius: 8px;
+                            margin: 16pt 0;
+                            padding: 12pt 14pt;
+                            background: #f5f7fa;
+                            border: 1pt solid #d0d5dd;
+                            border-radius: 4pt;
                         }
                         .section-header {
-                            font-size: 16px;
+                            font-size: 11pt;
                             font-weight: 700;
-                            margin-bottom: 12px;
-                            color: #1e293b;
-                            border-bottom: 1px solid #cbd5e1;
-                            padding-bottom: 5px;
+                            margin-bottom: 10pt;
+                            color: #1e3a5f;
+                            border-bottom: 1pt solid #c0c5cc;
+                            padding-bottom: 4pt;
                             text-transform: uppercase;
+                            letter-spacing: 0.5pt;
                         }
                         .info-grid {
                             display: grid;
                             grid-template-columns: repeat(4, 1fr);
-                            gap: 12px;
+                            gap: 8pt;
                         }
                         .info-item {
                             display: flex;
@@ -303,81 +319,92 @@ const ReferralPage = () => {
                         }
                         .info-label {
                             font-weight: 600;
-                            color: #64748b;
-                            font-size: 11px;
+                            color: #555;
+                            font-size: 8pt;
                             text-transform: uppercase;
+                            letter-spacing: 0.3pt;
                         }
                         .info-value {
-                            color: #1e293b;
+                            color: #1a1a1a;
                             font-weight: 700;
-                            font-size: 14px;
+                            font-size: 11pt;
                         }
                         .clinical-section {
-                            margin: 15px 0;
+                            margin: 12pt 0;
                         }
                         .data-row {
-                            margin-bottom: 10px;
+                            margin-bottom: 8pt;
                             page-break-inside: avoid;
                         }
                         .data-label {
-                            font-size: 14px;
+                            font-size: 10pt;
                             font-weight: 700;
-                            color: #1e40af;
-                            margin-bottom: 4px;
+                            color: #1e3a5f;
+                            margin-bottom: 3pt;
                             text-transform: uppercase;
+                            letter-spacing: 0.3pt;
                         }
                         .data-value {
-                            font-size: 14px;
-                            line-height: 1.6;
-                            color: #334155;
-                            padding: 8px 12px;
-                            background: #fff;
-                            border-left: 3px solid #e2e8f0;
+                            font-size: 11pt;
+                            line-height: 1.5;
+                            color: #1a1a1a;
+                            padding: 6pt 10pt;
+                            background: #fafafa;
+                            border-left: 2pt solid #d0d5dd;
                             white-space: pre-wrap;
                         }
                         .referral-main {
                             background: #fff;
-                            border: 2px solid #2563eb;
-                            padding: 15px;
-                            border-radius: 8px;
-                            margin: 20px 0;
+                            border: 1.5pt solid #1e3a5f;
+                            padding: 12pt 14pt;
+                            border-radius: 4pt;
+                            margin: 16pt 0;
+                        }
+                        .referral-main .info-value {
+                            font-size: 13pt;
+                            color: #1e3a5f;
                         }
                         .signature-section {
-                            margin-top: 25px;
+                            margin-top: 30pt;
                             display: flex;
                             justify-content: space-between;
+                            align-items: flex-end;
                         }
                         .sig-box {
                             text-align: center;
-                            width: 200px;
+                            width: 220pt;
                         }
                         .sig-line {
-                            border-top: 2px solid #1e293b;
-                            margin-top: 25px;
-                            padding-top: 5px;
-                            font-size: 12px;
+                            border-top: 1.5pt solid #1a1a1a;
+                            margin-top: 30pt;
+                            padding-top: 4pt;
+                            font-size: 9pt;
                             font-weight: 700;
                         }
+                        .sig-name {
+                            font-size: 11pt;
+                            margin-top: 4pt;
+                        }
                         .stamp-circle {
-                            width: 100px;
-                            height: 100px;
-                            border: 2px dashed #cbd5e1;
+                            width: 90pt;
+                            height: 90pt;
+                            border: 1.5pt dashed #aaa;
                             border-radius: 50%;
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                            color: #94a3b8;
-                            font-size: 11px;
+                            color: #888;
+                            font-size: 8pt;
                             text-transform: uppercase;
                             font-weight: bold;
                         }
                         .footer {
-                            margin-top: 15px;
+                            margin-top: 20pt;
                             text-align: center;
-                            font-size: 10px;
-                            color: #94a3b8;
-                            border-top: 1px solid #e2e8f0;
-                            padding-top: 10px;
+                            font-size: 8pt;
+                            color: #888;
+                            border-top: 1pt solid #d0d5dd;
+                            padding-top: 8pt;
                         }
                     </style>
                 </head>
@@ -385,15 +412,15 @@ const ReferralPage = () => {
                     <div class="container">
                         <div class="header">
                             <div class="header-left">
-                                <img src="/selihom.jpg" alt="" class="logo" onerror="this.style.display='none'">
+                                <img src="${window.__CS__?.logoUrl || '/clinic-logo.jpg'}" alt="" class="logo" onerror="this.style.display='none'">
                                 <div>
-                                    <h1 class="clinic-name">Selihom Medical Clinic</h1>
-                                    <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
+                                    <h1 class="clinic-name">${window.__CS__?.name || 'Clinic'}</h1>
+                                    <p class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</p>
                                 </div>
                             </div>
                             <div class="header-right">
                                 <h2 class="report-title">Patient Referral Form</h2>
-                                <div style="font-size: 12px; color: #64748b;">Date: ${formatDate(referral.createdAt)}</div>
+                                <div class="report-date">Date: ${formatDate(referral.createdAt)}</div>
                             </div>
                         </div>
 
@@ -423,7 +450,7 @@ const ReferralPage = () => {
                             <div class="info-grid" style="grid-template-columns: 2fr 1fr 1fr;">
                                 <div class="info-item">
                                     <span class="info-label">Referring To</span>
-                                    <span class="info-value" style="font-size: 16px; color: #1e40af;">${referral.facilityName}</span>
+                                    <span class="info-value">${referral.facilityName}</span>
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Urgency</span>
@@ -485,13 +512,13 @@ const ReferralPage = () => {
                         <div class="signature-section">
                             <div class="sig-box">
                                 <div class="sig-line">Referring Physician</div>
-                                <div style="font-size: 13px; margin-top: 5px;">Dr. ${referral.doctor?.fullname}${referral.doctor?.qualifications?.length ? ` - ${referral.doctor.qualifications.join(', ')}` : ''}</div>
+                                <div style="font-size: 13px; margin-top: 5px;">Dr. ${referral.doctor?.fullname}</div>
                             </div>
                             <div class="stamp-circle">Clinic Stamp</div>
                         </div>
 
                         <div class="footer">
-                            This is an official medical referral document from Selihom Medical Clinic.
+                            This is an official medical referral document from ${window.__CS__?.name || 'Clinic'}.
                             <br>Generated on ${currentDate}
                         </div>
                     </div>

@@ -273,10 +273,10 @@ const WalkInNurseOrders = () => {
         <body>
           <div class="header">
             <div class="header-left">
-              <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+              <img src="${window.__CS__?.logoUrl || '/clinic-logo.jpg'}" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
               <div class="clinic-info">
-                <h1 class="clinic-name">Selihom Medical Clinic</h1>
-                <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
+                <h1 class="clinic-name">${window.__CS__?.name || 'Clinic'}</h1>
+                <p class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</p>
               </div>
             </div>
             <div class="header-right">
@@ -356,7 +356,7 @@ const WalkInNurseOrders = () => {
           </div>
 
           <div class="print-footer">
-            Selihom Medical Clinic - Generated on ${new Date().toLocaleString()}
+            ${window.__CS__?.name || 'Clinic'} - Generated on ${new Date().toLocaleString()}
           </div>
         </body>
       </html>
@@ -489,34 +489,33 @@ const WalkInNurseOrders = () => {
       {/* Order Details Modal */}
       {showOrderDetails && selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Package className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">{selectedOrder.patient?.name || 'Unknown Patient'}</h2>
-                    <p className="text-gray-600">Order #{selectedOrder.id} - {selectedOrder.service?.price?.toFixed(2) || '0.00'} ETB</p>
-                  </div>
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
+            <div className="shrink-0 p-6 pb-0 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Package className="h-6 w-6 text-blue-600" />
                 </div>
-                <button
-                  onClick={() => {
-                    setShowOrderDetails(false);
-                    setSelectedOrder(null);
-                    setCompletedOrderData(null);
-                    setCompletionNotes('');
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{selectedOrder.patient?.name || 'Unknown Patient'}</h2>
+                  <p className="text-gray-600">Order #{selectedOrder.id} - {selectedOrder.service?.price?.toFixed(2) || '0.00'} ETB</p>
+                </div>
               </div>
+              <button
+                onClick={() => {
+                  setShowOrderDetails(false);
+                  setSelectedOrder(null);
+                  setCompletedOrderData(null);
+                  setCompletionNotes('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
+            <div className="overflow-y-auto flex-1 p-6">
               {/* Patient Information */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Patient Information</h3>
@@ -597,25 +596,6 @@ const WalkInNurseOrders = () => {
                       placeholder="Add notes about the service completion..."
                     />
                   </div>
-                  <div className="flex justify-end space-x-3">
-                    <button
-                      onClick={() => {
-                        setShowOrderDetails(false);
-                        setSelectedOrder(null);
-                        setCompletionNotes('');
-                      }}
-                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleCompleteOrder}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      <span>Complete Service</span>
-                    </button>
-                  </div>
                 </div>
               ) : (selectedOrder.status === 'COMPLETED' || completedOrderData) && (
                 <div className="bg-green-50 rounded-lg p-4">
@@ -649,6 +629,43 @@ const WalkInNurseOrders = () => {
                     </p>
                   )}
                 </div>
+              )}
+            </div>{/* end scrollable content */}
+
+            {/* Sticky footer */}
+            <div className="shrink-0 border-t bg-white px-6 py-4 flex justify-end space-x-3">
+              {selectedOrder.status === 'PAID' && !completedOrderData ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setShowOrderDetails(false);
+                      setSelectedOrder(null);
+                      setCompletionNotes('');
+                    }}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCompleteOrder}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Complete Service</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    setShowOrderDetails(false);
+                    setSelectedOrder(null);
+                    setCompletedOrderData(null);
+                    setCompletionNotes('');
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Close
+                </button>
               )}
             </div>
           </div>

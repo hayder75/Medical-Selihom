@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Search, FileText, TestTube, Scan, Pill, Printer,
   User, Phone, ArrowLeft, Calendar, Clock, AlertTriangle, DollarSign
@@ -20,16 +20,6 @@ const BillingPatientHistory = () => {
   const [loading, setLoading] = useState(false);
   const [selectedVisitId, setSelectedVisitId] = useState(null);
   const [activeTab, setActiveTab] = useState('medications');
-
-  // Debounce auto-search on input change
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchTerm.trim()) {
-        searchPatients();
-      }
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   const searchPatients = async () => {
     if (!searchTerm.trim()) return;
@@ -86,13 +76,24 @@ const BillingPatientHistory = () => {
   const calculateAge = (dob) => {
     if (!dob) return 'N/A';
     const birthDate = new Date(dob);
+    if (Number.isNaN(birthDate.getTime())) return 'N/A';
     const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+    let years = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) years--;
+    if (years < 0) return 'N/A';
+    if (years === 0) {
+      let months = today.getMonth() - birthDate.getMonth();
+      let days = today.getDate() - birthDate.getDate();
+      if (days < 0) {
+        months--;
+        const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+        days += prevMonth.getDate();
+      }
+      if (months < 0) months = 0;
+      return months === 0 ? `${days}d` : `${months}m ${days}d`;
     }
-    return age;
+    return years;
   };
 
   const normalizeOptionalValue = (value) => {
@@ -145,6 +146,15 @@ const BillingPatientHistory = () => {
   };
 
   const getDoctorQualificationLabel = (doctorData, fallbackDoctorData) => {
+    const specialty = doctorData?.specialty || fallbackDoctorData?.specialty;
+    const labels = {
+      general: 'General Doctor', dentist: 'Dentist', dermatology: 'Dermato-venereologist',
+      healthOfficer: 'Health Officer (HO)', obgyn: 'OB/GYN', pediatrician: 'Pediatrician',
+      internist: 'Internist', surgeon: 'Surgeon', orthopedic: 'Orthopedic',
+      physiotherapist: 'Physiotherapist'
+    };
+    if (specialty && labels[specialty]) return labels[specialty];
+
     const roleCandidates = [doctorData?.role, fallbackDoctorData?.role]
       .map((role) => String(role || '').toUpperCase());
     const mergedQualifications = [
@@ -320,10 +330,10 @@ const BillingPatientHistory = () => {
           <div class="prescription-container">
             <div class="header">
               <div class="header-left">
-                <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+                <img src="${window.__CS__?.logoUrl || '/clinic-logo.jpg'}" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
                 <div class="clinic-info">
-                  <h1 class="clinic-name">Selihom Medical Clinic</h1>
-                  <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
+                  <h1 class="clinic-name">${window.__CS__?.name || 'Clinic'}</h1>
+                  <p class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</p>
                 </div>
               </div>
               <div class="header-right">
@@ -337,7 +347,7 @@ const BillingPatientHistory = () => {
             <div class="patient-section">
               <div><span class="info-label">Patient:</span> ${patientName?.toUpperCase()}</div>
               <div><span class="info-label">Card No:</span> #${patientCardNumber}</div>
-              <div><span class="info-label">Age/Sex:</span> ${patientAge}Y / ${patientGender}</div>
+              <div><span class="info-label">Age/Sex:</span> ${typeof patientAge === 'number' ? patientAge + 'Y' : patientAge} / ${patientGender}</div>
               <div style="text-align: right;"><span class="info-label">Visit ID:</span> #${selectedVisit?.visitUid || selectedVisit?.id?.substring(0, 8)}</div>
             </div>
             <div class="medications-section">
@@ -436,10 +446,10 @@ const BillingPatientHistory = () => {
           <div class="prescription-container">
             <div class="header">
               <div class="header-left">
-                <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+                <img src="${window.__CS__?.logoUrl || '/clinic-logo.jpg'}" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
                 <div class="clinic-info">
-                  <h1 class="clinic-name">Selihom Medical Clinic</h1>
-                  <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
+                  <h1 class="clinic-name">${window.__CS__?.name || 'Clinic'}</h1>
+                  <p class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</p>
                 </div>
               </div>
               <div class="header-right">
@@ -450,7 +460,7 @@ const BillingPatientHistory = () => {
             <div class="patient-section">
               <div><span class="info-label">Patient:</span> ${String(patientName || '').toUpperCase()}</div>
               <div><span class="info-label">Card No:</span> #${patientCardNumber}</div>
-              <div><span class="info-label">Age/Sex:</span> ${patientAge}Y / ${patientGender}</div>
+              <div><span class="info-label">Age/Sex:</span> ${typeof patientAge === 'number' ? patientAge + 'Y' : patientAge} / ${patientGender}</div>
               <div style="text-align: right;"><span class="info-label">Visit ID:</span> #${selectedVisit?.visitUid || selectedVisit?.id?.substring(0, 8)}</div>
             </div>
             <div class="medications-section">
@@ -573,10 +583,10 @@ const BillingPatientHistory = () => {
           <div class="prescription-container">
             <div class="header">
               <div class="header-left">
-                <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+                <img src="${window.__CS__?.logoUrl || '/clinic-logo.jpg'}" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
                 <div class="clinic-info">
-                  <h1 class="clinic-name">Selihom Medical Clinic</h1>
-                  <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
+                  <h1 class="clinic-name">${window.__CS__?.name || 'Clinic'}</h1>
+                  <p class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</p>
                 </div>
               </div>
               <div class="header-right">
@@ -590,7 +600,7 @@ const BillingPatientHistory = () => {
             <div class="patient-section">
               <div><span class="info-label">Patient:</span> ${patientName?.toUpperCase()}</div>
               <div><span class="info-label">Card No:</span> #${patientCardNumber}</div>
-              <div><span class="info-label">Age/Sex:</span> ${patientAge}Y / ${patientGender}</div>
+              <div><span class="info-label">Age/Sex:</span> ${typeof patientAge === 'number' ? patientAge + 'Y' : patientAge} / ${patientGender}</div>
               <div><span class="info-label">Visit:</span> EMERGENCY</div>
             </div>
             <div class="medications-section">
@@ -652,7 +662,7 @@ const BillingPatientHistory = () => {
 
     const patientData = billing.patient || patientHistory?.patient || {};
     const receiptGender = normalizeOptionalValue(patientData.gender) || extractMetaFromNotes(billing.notes, 'Gender');
-    const receiptAge = normalizeOptionalValue(patientData.age) || extractMetaFromNotes(billing.notes, 'Age');
+    const receiptAge = (normalizeOptionalValue(patientData.age) || (patientData.dob ? calculateAge(patientData.dob) : null)) || extractMetaFromNotes(billing.notes, 'Age');
     const receiptBloodType = formatBloodType(patientData.bloodType) || extractMetaFromNotes(billing.notes, 'Blood Type');
     const referringDoctor = extractMetaFromNotes(billing.notes, 'Referring Doctor');
 
@@ -702,7 +712,7 @@ const BillingPatientHistory = () => {
           <div class="receipt-container">
             ${billing.status === "PAID" ? `<div class="status-stamp">PAID</div>` : ""}
             <div class="header">
-              <h1 class="clinic-name">Selihom Medical Clinic</h1>
+              <h1 class="clinic-name">${window.__CS__?.name || 'Clinic'}</h1>
               <h2 class="receipt-title">Service Receipt</h2>
               <div style="font-size: 9px; color: #64748b;">${currentDate} ${currentTime}</div>
             </div>
@@ -750,8 +760,8 @@ const BillingPatientHistory = () => {
             </div>
 
             <div class="footer">
-              Thank you for choosing Selihom Medical Clinic<br>
-              Quality Healthcare You Can Trust
+              Thank you for choosing ${window.__CS__?.name || 'Clinic'}<br>
+              ${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}
             </div>
           </div>
         </body>
@@ -966,10 +976,10 @@ const BillingPatientHistory = () => {
           <div class="no-print"><button onclick="window.print()">Print Report</button></div>
           <div class="header">
             <div class="header-left">
-              <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+              <img src="${window.__CS__?.logoUrl || '/clinic-logo.jpg'}" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
               <div class="clinic-info">
-                <h1 class="clinic-name">Selihom Medical Clinic</h1>
-                <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
+                <h1 class="clinic-name">${window.__CS__?.name || 'Clinic'}</h1>
+                <p class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</p>
               </div>
             </div>
             <div class="header-right">
@@ -1054,7 +1064,7 @@ const BillingPatientHistory = () => {
           </div>
 
           <div class="print-footer">
-            Computer Generated Report • Selihom Medical Clinic • ${formatDateTime(currentDate)}
+            Computer Generated Report • ${window.__CS__?.name || 'Clinic'} • ${formatDateTime(currentDate)}
           </div>
         </body>
       </html>
@@ -1236,10 +1246,10 @@ const BillingPatientHistory = () => {
           <div class="no-print"><button onclick="window.print()">Print Report</button></div>
           <div class="header">
             <div class="header-left">
-              <img src="/selihom.jpg" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+              <img src="${window.__CS__?.logoUrl || '/clinic-logo.jpg'}" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
               <div class="clinic-info">
-                <h1 class="clinic-name">Selihom Medical Clinic</h1>
-                <p class="clinic-tagline">Quality Healthcare You Can Trust</p>
+                <h1 class="clinic-name">${window.__CS__?.name || 'Clinic'}</h1>
+                <p class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</p>
               </div>
             </div>
             <div class="header-right">
@@ -1296,7 +1306,7 @@ const BillingPatientHistory = () => {
           </div>
 
           <div class="print-footer">
-            Computer Generated Report • Selihom Medical Clinic • ${currentDate} ${currentTime}
+            Computer Generated Report • ${window.__CS__?.name || 'Clinic'} • ${currentDate} ${currentTime}
           </div>
         </body>
       </html>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, Heart, Shield, Users } from 'lucide-react';
+import { loadClinicSettings } from '../services/clinicSettings';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
@@ -15,6 +16,7 @@ const LoginPage = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [clinicSettings, setClinicSettings] = useState(null);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -35,7 +37,9 @@ const LoginPage = () => {
       }
     };
     fetchUsers();
+    loadClinicSettings().then(setClinicSettings);
   }, []);
+
 
 
   const handleChange = (e) => {
@@ -124,8 +128,8 @@ const LoginPage = () => {
             {/* Selihom Logo */}
             <div className="relative mb-8">
               <img
-                src="/selihom.jpg"
-                alt="Selihom Medical Clinic"
+                src={clinicSettings?.logoUrl || "/selihom.jpg"}
+                alt={clinicSettings?.name || "Selihom Medium Clinic"}
                 className="w-64 h-64 mx-auto rounded-full object-cover shadow-2xl border-4 border-white"
               />
             </div>
@@ -134,7 +138,7 @@ const LoginPage = () => {
             <div className="text-white space-y-4">
               <h3 className="text-3xl font-bold">Welcome to</h3>
               <h2 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Selihom Medical Clinic
+                {clinicSettings?.name || "Selihom Medium Clinic"}
               </h2>
               <p className="text-xl text-gray-600 max-w-md mx-auto">
                 We are committed to providing exceptional healthcare services with compassion and excellence.
@@ -153,7 +157,7 @@ const LoginPage = () => {
               Sign In
             </h2>
             <p className="text-xl font-medium text-gray-700">
-              Access your Selihom Medical Clinic account
+              {clinicSettings?.name ? `Access your ${clinicSettings.name} account` : "Access your Selihom Medium Clinic account"}
             </p>
           </div>
 

@@ -2,6 +2,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const http = require('http');
 const { PrismaClient } = require('@prisma/client');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -14,6 +15,8 @@ const zod = require('zod');
 const path = require('path');
 const fs = require('fs');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { initSocket } = require('./src/config/socket');
 
 // Routes
 const authRoutes = require('./src/routes/auth');
@@ -52,6 +55,9 @@ const internationalMedicalCertificatesRoutes = require('./src/routes/internation
 const diseasesRoutes = require('./src/routes/diseases');
 const accommodationRoutes = require('./src/routes/accommodation');
 const compoundPrescriptionRoutes = require('./src/routes/compoundPrescriptions');
+const specialtyRoutes = require('./src/routes/specialty');
+const familyPlanningRoutes = require('./src/routes/familyPlanning');
+const abortionCareRoutes = require('./src/routes/abortionCare');
 
 // Middleware
 const authMiddleware = require('./src/middleware/auth');
@@ -63,6 +69,9 @@ const app = express();
 
 // Singleton Prisma client
 const prisma = require('./src/config/database');
+
+// Auto-seed built-in templates (lab tests, radiology, teeth) on startup if empty
+const { seedAll } = require('./src/utils/seedTemplates');
 
 // Handle connection cleanup on shutdown
 process.on('beforeExit', async () => {
@@ -123,6 +132,31 @@ app.use((req, res, next) => {
 
 app.use(logger);  // Audit middleware
 
+// Rate limiters
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts, please try again after a minute' }
+});
+
+const searchLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many search requests, please slow down' }
+});
+
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' }
+});
+
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
   let dbStatus = 'unknown';
@@ -148,7 +182,11 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Routes
+app.use('/api/auth/login', authLimiter);
 app.use('/api/auth', authRoutes);
+
+// General rate limiter for all other API routes
+app.use('/api', generalLimiter);
 app.use('/api/patients', authMiddleware, patientsRoutes);
 app.use('/api/visits', authMiddleware, visitsRoutes);
 app.use('/api/billing', authMiddleware, roleGuard(['BILLING_OFFICER', 'PHARMACY_BILLING_OFFICER', 'PHARMACIST', 'ADMIN']), billingRoutes);
@@ -160,9 +198,9 @@ app.use('/api/pharmacies', authMiddleware, roleGuard(['PHARMACY_OFFICER', 'PHARM
 app.use('/api/batch-orders', batchOrdersRoutes);
 app.use('/api/pharmacy-billing', authMiddleware, roleGuard(['PHARMACY_BILLING_OFFICER', 'PHARMACIST', 'ADMIN']), pharmacyBillingRoutes);
 app.use('/api/medications', authMiddleware, medicationRoutes);
-app.use('/api/admin', authMiddleware, roleGuard(['ADMIN']), adminRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/schedules', authMiddleware, schedulesRoutes);
-app.use('/api/walk-in-sales', authMiddleware, roleGuard(['PHARMACIST', 'PHARMACY_BILLING_OFFICER', 'ADMIN']), walkInSalesRoutes);
+app.use('/api/walk-in-sales', authMiddleware, roleGuard(['PHARMACIST', 'PHARMACY_BILLING_OFFICER', 'PHARMACY_OFFICER', 'ADMIN']), walkInSalesRoutes);
 app.use('/api/dental', dentalRoutes);
 app.use('/api/dental-photos', authMiddleware, roleGuard(['DOCTOR', 'ADMIN']), dentalPhotosRoutes);
 app.use('/api/patient-attached-images', authMiddleware, patientAttachedImagesRoutes);
@@ -184,6 +222,9 @@ app.use('/api/international-medical-certificates', authMiddleware, roleGuard(['D
 app.use('/api/diseases', diseasesRoutes);
 app.use('/api/accommodation', accommodationRoutes);
 app.use('/api/compound-prescriptions', authMiddleware, compoundPrescriptionRoutes);
+app.use('/api/specialty', authMiddleware, specialtyRoutes);
+app.use('/api/family-planning', familyPlanningRoutes);
+app.use('/api/abortion-care', abortionCareRoutes);
 
 // Serve frontend for all non-API routes (SPA routing)
 // This must be after all API routes
@@ -320,10 +361,75 @@ cron.schedule('0 * * * *', () => {
   terminateExpiredAdmissions();
 });
 
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('[Server] Unhandled error:', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
 
-app.listen(PORT, HOST, () => {
+// Cleanup stuck visits (runs hourly)
+async function cleanupStuckVisits() {
+  try {
+    const fourDaysAgo = new Date(Date.now() - 96 * 60 * 60 * 1000);
+    const stuckVisits = await prisma.visit.findMany({
+      where: {
+        status: {
+          in: ['AWAITING_LAB_RESULTS', 'AWAITING_RADIOLOGY_RESULTS', 'AWAITING_RESULTS_REVIEW',
+                'SENT_TO_LAB', 'SENT_TO_RADIOLOGY', 'SENT_TO_BOTH', 'AWAITING_CARD_BILLING']
+        },
+        updatedAt: { lt: fourDaysAgo }
+      },
+      select: { id: true, visitUid: true, status: true }
+    });
+
+    for (const visit of stuckVisits) {
+      await prisma.visit.update({
+        where: { id: visit.id },
+        data: {
+          notes: `${visit.notes || ''}\n[AUTO] Visit auto-completed after 4d inactivity (was: ${visit.status})`.trim(),
+          status: 'COMPLETED',
+          completedAt: new Date()
+        }
+      });
+      await prisma.auditLog.create({
+        data: {
+          action: 'VISIT_AUTO_COMPLETED',
+          entity: 'Visit',
+          entityId: visit.id,
+          userId: null,
+          details: `Visit ${visit.visitUid} auto-completed from ${visit.status} after 4d of inactivity`
+        }
+      });
+    }
+    if (stuckVisits.length > 0) {
+      console.log(`[Cron] Auto-completed ${stuckVisits.length} stuck visits`);
+    }
+  } catch (error) {
+    console.error('[Cron] Error cleaning up stuck visits:', error.message);
+  }
+}
+
+// Run on startup
+cleanupStuckVisits();
+
+// Schedule hourly check
+cron.schedule('0 * * * *', () => {
+  cleanupStuckVisits();
+});
+
+const server = http.createServer(app);
+initSocket(server);
+
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '127.0.0.1';
+
+// Auto-seed built-in templates on startup
+seedAll().catch(err => console.error('[Server] Template seeding failed:', err.message));
+
+server.listen(PORT, HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
   console.log(`Node environment: ${process.env.NODE_ENV}`);
 });

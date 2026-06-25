@@ -56,6 +56,10 @@ const LabOrders = () => {
     fetchTemplates();
   }, [statusFilter, dateFilter]);
 
+  useEffect(() => {
+    const interval = setInterval(() => fetchOrders(), 30000);
+    return () => clearInterval(interval);
+  }, []);
   const fetchOrders = async () => {
     try {
       setLoading(true);

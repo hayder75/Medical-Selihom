@@ -64,15 +64,6 @@ exports.createBatchOrder = async (req, res) => {
       // Regular patient - Using requesting user ID
     }
 
-    // If visit has no assignment but a doctor is placing orders, create one
-    if (!visit.assignmentId && actualDoctorId) {
-      const newAssignment = await prisma.assignment.create({
-        data: { patientId: visit.patientId, doctorId: actualDoctorId, status: 'Active' }
-      });
-      await prisma.visit.update({ where: { id: visit.id }, data: { assignmentId: newAssignment.id } });
-      console.log('Auto-created assignment ' + newAssignment.id + ' for visit ' + visit.id);
-    }
-
     // For nurse services or procedures with nurse assignment, validate assigned nurse
     if ((type === 'NURSE' || type === 'PROCEDURE') && assignedNurseId) {
       const assignedNurse = await prisma.user.findUnique({
@@ -595,47 +586,61 @@ exports.createBatchOrder = async (req, res) => {
           // Dental services merged into existing billing
         }
       } else if (type === 'PROCEDURE') {
+        // Aggregate services by serviceId to handle quantities
+        const serviceQuantities = {};
+        const servicePrices = {};
+
+        newServicesAdded.forEach(s => {
+          if (!serviceQuantities[s.serviceId]) {
+            serviceQuantities[s.serviceId] = 0;
+            servicePrices[s.serviceId] = s.price;
+          }
+          serviceQuantities[s.serviceId]++;
+        });
+
+        const billingServices = Object.keys(serviceQuantities).map(serviceId => ({
+          serviceId: serviceId,
+          quantity: serviceQuantities[serviceId],
+          unitPrice: servicePrices[serviceId],
+          totalPrice: servicePrices[serviceId] * serviceQuantities[serviceId]
+        }));
+
+        const aggregatedTotal = billingServices.reduce((sum, bs) => sum + bs.totalPrice, 0);
         const procedureNames = validServices.map(s => s.name).join(', ');
-        const procedureTotal = newServicesAdded.reduce((sum, s) => sum + s.price, 0);
 
         if (!billing) {
           billing = await prisma.billing.create({
             data: {
               patientId,
               visitId,
-              totalAmount: procedureTotal,
+              totalAmount: aggregatedTotal,
               status: 'PENDING',
               notes: `Procedures: ${procedureNames}`,
               services: {
-                create: newServicesAdded.map(s => ({
-                  serviceId: s.serviceId,
-                  quantity: 1,
-                  unitPrice: s.price,
-                  totalPrice: s.price
-                }))
+                create: billingServices
               }
             }
           });
         } else {
           // Add procedure services to existing billing
-          for (const service of newServicesAdded) {
-            const existingService = billing.services?.find(bs => bs.serviceId === service.serviceId);
+          for (const bs of billingServices) {
+            const existingService = billing.services?.find(s => s.serviceId === bs.serviceId);
             if (existingService) {
               await prisma.billingService.update({
-                where: { billingId_serviceId: { billingId: billing.id, serviceId: service.serviceId } },
+                where: { billingId_serviceId: { billingId: billing.id, serviceId: bs.serviceId } },
                 data: {
-                  quantity: existingService.quantity + 1,
-                  totalPrice: existingService.totalPrice + service.price
+                  quantity: existingService.quantity + bs.quantity,
+                  totalPrice: existingService.totalPrice + bs.totalPrice
                 }
               });
             } else {
               await prisma.billingService.create({
                 data: {
                   billingId: billing.id,
-                  serviceId: service.serviceId,
-                  quantity: 1,
-                  unitPrice: service.price,
-                  totalPrice: service.price
+                  serviceId: bs.serviceId,
+                  quantity: bs.quantity,
+                  unitPrice: bs.unitPrice,
+                  totalPrice: bs.totalPrice
                 }
               });
             }
@@ -648,7 +653,7 @@ exports.createBatchOrder = async (req, res) => {
           billing = await prisma.billing.update({
             where: { id: billing.id },
             data: {
-              totalAmount: { increment: procedureTotal },
+              totalAmount: { increment: aggregatedTotal },
               notes: updatedNotes
             }
           });
@@ -1185,15 +1190,6 @@ exports.createLabTestOrders = async (req, res) => {
       return res.status(404).json({ error: 'Visit not found' });
     }
 
-    // If visit has no assignment but a doctor is placing orders, create one
-    if (!visit.assignmentId) {
-      const newAssignment = await prisma.assignment.create({
-        data: { patientId: visit.patientId, doctorId: req.user.id, status: 'Active' }
-      });
-      await prisma.visit.update({ where: { id: visit.id }, data: { assignmentId: newAssignment.id } });
-      console.log('Auto-created assignment ' + newAssignment.id + ' for visit ' + visit.id);
-    }
-
     // Validate patient
     const patient = await prisma.patient.findUnique({
       where: { id: patientId }
@@ -1220,16 +1216,42 @@ exports.createLabTestOrders = async (req, res) => {
 
     // Check for existing orders to avoid duplicates
     // Only block if there are unpaid or active orders (not completed ones - allow re-ordering)
+    // Orders without billingId are orphaned from a failed prior attempt and should be retryable
     const existingOrders = await prisma.labTestOrder.findMany({
       where: {
         visitId: visitId,
         labTestId: { in: labTestIds },
-        status: { in: ['UNPAID', 'PAID', 'QUEUED', 'IN_PROGRESS'] } // Exclude COMPLETED - allow re-ordering
+        status: { in: ['UNPAID', 'PAID', 'QUEUED', 'IN_PROGRESS'] },
+        billingId: { not: null }
       },
       select: { labTestId: true, status: true }
     });
 
     const existingTestIds = new Set(existingOrders.map(o => o.labTestId));
+
+    // Clean up orphaned orders (UNPAID, no billingId) from a failed prior attempt
+    const orphanedOrders = await prisma.labTestOrder.findMany({
+      where: {
+        visitId: visitId,
+        labTestId: { in: labTestIds },
+        status: 'UNPAID',
+        billingId: null
+      },
+      select: { id: true, batchOrderId: true }
+    });
+    if (orphanedOrders.length > 0) {
+      console.log(`🧹 [createLabTestOrders] Cleaning up ${orphanedOrders.length} orphaned orders from failed prior attempt`);
+      const orphanedBatchIds = [...new Set(orphanedOrders.map(o => o.batchOrderId).filter(Boolean))];
+      await prisma.labTestOrder.deleteMany({
+        where: { id: { in: orphanedOrders.map(o => o.id) } }
+      });
+      if (orphanedBatchIds.length > 0) {
+        await prisma.batchOrder.deleteMany({
+          where: { id: { in: orphanedBatchIds } }
+        });
+      }
+    }
+
     const newTestIds = labTestIds.filter(id => !existingTestIds.has(id));
 
     if (newTestIds.length === 0) {
@@ -1257,207 +1279,208 @@ exports.createLabTestOrders = async (req, res) => {
 
     console.log(`✅ [createLabTestOrders] Creating ${newTestIds.length} new orders (${labTestIds.length - newTestIds.length} already exist)`);
 
-    // Create a batch order for grouping (optional, for compatibility)
-    const batchOrder = await prisma.batchOrder.create({
-      data: {
-        visitId,
-        patientId,
-        doctorId,
-        type: 'LAB',
-        instructions: instructions || 'Lab tests ordered by doctor',
-        status: 'UNPAID'
-      }
-    });
-
-    // Create lab test orders
-    const createdOrders = [];
-    let totalAmount = 0;
-
-    for (const testId of newTestIds) {
-      const test = labTests.find(t => t.id === testId);
-      if (!test) continue;
-
-      const order = await prisma.labTestOrder.create({
+    const result = await prisma.$transaction(async (tx) => {
+      // Create a batch order for grouping (optional, for compatibility)
+      const batchOrder = await tx.batchOrder.create({
         data: {
-          labTestId: testId,
-          batchOrderId: batchOrder.id,
           visitId,
           patientId,
           doctorId,
-          instructions: instructions || `Lab test: ${test.name}`,
-          status: visit.isEmergency ? 'QUEUED' : 'UNPAID',
-          isWalkIn: false
-        },
-        include: {
-          labTest: {
-            include: {
-              service: true,
-              group: true
+          type: 'LAB',
+          instructions: instructions || 'Lab tests ordered by doctor',
+          status: 'UNPAID'
+        }
+      });
+
+      // Create lab test orders
+      const createdOrders = [];
+      let totalAmount = 0;
+
+      for (const testId of newTestIds) {
+        const test = labTests.find(t => t.id === testId);
+        if (!test) continue;
+
+        const order = await tx.labTestOrder.create({
+          data: {
+            labTestId: testId,
+            batchOrderId: batchOrder.id,
+            visitId,
+            patientId,
+            doctorId,
+            instructions: instructions || `Lab test: ${test.name}`,
+            status: visit.isEmergency ? 'QUEUED' : 'UNPAID',
+            isWalkIn: false
+          },
+          include: {
+            labTest: {
+              include: {
+                service: true,
+                group: true
+              }
             }
-          }
-        }
-      });
-
-      createdOrders.push(order);
-      totalAmount += test.price;
-    }
-
-    // Create billing entry
-    let billing = await prisma.billing.findFirst({
-      where: {
-        visitId: visitId,
-        status: 'PENDING'
-      }
-    });
-
-    if (!billing) {
-      billing = await prisma.billing.create({
-        data: {
-          patientId,
-          visitId,
-          totalAmount: 0,
-          status: 'PENDING',
-          notes: 'Diagnostics billing'
-        }
-      });
-    }
-
-    // Link all orders to this billing
-    await prisma.labTestOrder.updateMany({
-      where: {
-        id: { in: createdOrders.map(o => o.id) }
-      },
-      data: {
-        billingId: billing.id
-      }
-    });
-
-    // Add services to billing
-    for (const order of createdOrders) {
-      if (order.labTest.serviceId) {
-        const existingBillingService = await prisma.billingService.findFirst({
-          where: {
-            billingId: billing.id,
-            serviceId: order.labTest.serviceId
           }
         });
 
-        if (!existingBillingService) {
-          await prisma.billingService.create({
-            data: {
-              billingId: billing.id,
-              serviceId: order.labTest.serviceId,
-              quantity: 1,
-              unitPrice: order.labTest.price,
-              totalPrice: order.labTest.price
-            }
-          });
+        createdOrders.push(order);
+        totalAmount += test.price;
+      }
+
+      // Create billing entry
+      let billing = await tx.billing.findFirst({
+        where: {
+          visitId: visitId,
+          status: 'PENDING'
         }
-      } else {
-          // BillingService requires a non-null serviceId. For lab tests without a linked
-          // service (e.g. legacy/custom microbiology), create/reuse a stable fallback LAB service.
-          const fallbackServiceCode = `LABTEST-${order.labTest.id}`;
+      });
 
-          let fallbackService = await prisma.service.findUnique({
-            where: { code: fallbackServiceCode },
-            select: { id: true }
-          });
-
-          if (!fallbackService) {
-            fallbackService = await prisma.service.create({
-              data: {
-                code: fallbackServiceCode,
-                name: order.labTest.name,
-                category: 'LAB',
-                price: order.labTest.price,
-                unit: order.labTest.unit || 'UNIT',
-                description: `Auto-generated LAB service for lab test ${order.labTest.name}`,
-                isActive: true
-              },
-              select: { id: true }
-            });
+      if (!billing) {
+        billing = await tx.billing.create({
+          data: {
+            patientId,
+            visitId,
+            totalAmount: 0,
+            status: 'PENDING',
+            notes: 'Diagnostics billing'
           }
+        });
+      }
 
-          // Backfill LabTest.serviceId so future orders use the normal path.
-          if (!order.labTest.serviceId) {
-            await prisma.labTest.update({
-              where: { id: order.labTest.id },
-              data: { serviceId: fallbackService.id }
-            });
-          }
+      // Link all orders to this billing
+      await tx.labTestOrder.updateMany({
+        where: {
+          id: { in: createdOrders.map(o => o.id) }
+        },
+        data: {
+          billingId: billing.id
+        }
+      });
 
-          const existingFallbackLine = await prisma.billingService.findFirst({
+      // Add services to billing
+      for (const order of createdOrders) {
+        if (order.labTest.serviceId) {
+          const existingBillingService = await tx.billingService.findFirst({
             where: {
               billingId: billing.id,
-              serviceId: fallbackService.id
+              serviceId: order.labTest.serviceId
             }
           });
 
-          if (existingFallbackLine) {
-            await prisma.billingService.update({
-              where: {
-                billingId_serviceId: {
-                  billingId: billing.id,
-                  serviceId: fallbackService.id
-                }
-              },
-              data: {
-                quantity: { increment: 1 },
-                totalPrice: { increment: order.labTest.price }
-              }
-            });
-          } else {
-            await prisma.billingService.create({
+          if (!existingBillingService) {
+            await tx.billingService.create({
               data: {
                 billingId: billing.id,
-                serviceId: fallbackService.id,
+                serviceId: order.labTest.serviceId,
                 quantity: 1,
                 unitPrice: order.labTest.price,
                 totalPrice: order.labTest.price
               }
             });
           }
+        } else {
+            const fallbackServiceCode = `LABTEST-${order.labTest.id}`;
 
-          console.log(`[createLabTestOrders] Lab test "${order.labTest.name}" (${order.labTest.price}) added to billing via fallback LAB service ${fallbackServiceCode}`);
+            let fallbackService = await tx.service.findUnique({
+              where: { code: fallbackServiceCode },
+              select: { id: true }
+            });
+
+            if (!fallbackService) {
+              fallbackService = await tx.service.create({
+                data: {
+                  code: fallbackServiceCode,
+                  name: order.labTest.name,
+                  category: 'LAB',
+                  price: order.labTest.price,
+                  unit: order.labTest.unit || 'UNIT',
+                  description: `Auto-generated LAB service for lab test ${order.labTest.name}`,
+                  isActive: true
+                },
+                select: { id: true }
+              });
+            }
+
+            if (!order.labTest.serviceId) {
+              await tx.labTest.update({
+                where: { id: order.labTest.id },
+                data: { serviceId: fallbackService.id }
+              });
+            }
+
+            const existingFallbackLine = await tx.billingService.findFirst({
+              where: {
+                billingId: billing.id,
+                serviceId: fallbackService.id
+              }
+            });
+
+            if (existingFallbackLine) {
+              await tx.billingService.update({
+                where: {
+                  billingId_serviceId: {
+                    billingId: billing.id,
+                    serviceId: fallbackService.id
+                  }
+                },
+                data: {
+                  quantity: { increment: 1 },
+                  totalPrice: { increment: order.labTest.price }
+                }
+              });
+            } else {
+              await tx.billingService.create({
+                data: {
+                  billingId: billing.id,
+                  serviceId: fallbackService.id,
+                  quantity: 1,
+                  unitPrice: order.labTest.price,
+                  totalPrice: order.labTest.price
+                }
+              });
+            }
+
+            console.log(`[createLabTestOrders] Lab test "${order.labTest.name}" (${order.labTest.price}) added to billing via fallback LAB service ${fallbackServiceCode}`);
+        }
       }
-    }
 
-    // Update billing total - tests without serviceId are now included in billingServices
-    const billingServices = await prisma.billingService.findMany({
-      where: { billingId: billing.id }
-    });
-    const servicesTotal = billingServices.reduce((sum, bs) => sum + bs.totalPrice, 0);
-    const newTotal = servicesTotal;
-
-    await prisma.billing.update({
-      where: { id: billing.id },
-      data: { totalAmount: newTotal }
-    });
-
-    // Update visit status - check if there are also radiology orders
-    const hasRadiologyOrders = await prisma.radiologyOrder.count({
-      where: {
-        visitId: visitId,
-        status: { in: ['UNPAID', 'PAID', 'QUEUED', 'IN_PROGRESS', 'COMPLETED'] }
-      }
-    }) > 0;
-
-    // Update visit status based on what was ordered
-    let newVisitStatus = visit.status;
-    if (hasRadiologyOrders) {
-      newVisitStatus = 'SENT_TO_BOTH';
-    } else {
-      newVisitStatus = 'SENT_TO_LAB';
-    }
-
-    // Only update if status is not already one of the sent statuses
-    if (!['SENT_TO_LAB', 'SENT_TO_RADIOLOGY', 'SENT_TO_BOTH'].includes(visit.status)) {
-      await prisma.visit.update({
-        where: { id: visitId },
-        data: { status: newVisitStatus }
+      // Update billing total
+      const billingServices = await tx.billingService.findMany({
+        where: { billingId: billing.id }
       });
-      console.log(`✅ Updated visit ${visitId} status to ${newVisitStatus}`);
-    }
+      const servicesTotal = billingServices.reduce((sum, bs) => sum + bs.totalPrice, 0);
+
+      await tx.billing.update({
+        where: { id: billing.id },
+        data: { totalAmount: servicesTotal }
+      });
+
+      // Update visit status - check if there are also radiology orders
+      const hasRadiologyOrders = await tx.radiologyOrder.count({
+        where: {
+          visitId: visitId,
+          status: { in: ['UNPAID', 'PAID', 'QUEUED', 'IN_PROGRESS', 'COMPLETED'] }
+        }
+      }) > 0;
+
+      let newVisitStatus = visit.status;
+      if (hasRadiologyOrders) {
+        newVisitStatus = 'SENT_TO_BOTH';
+      } else {
+        newVisitStatus = 'SENT_TO_LAB';
+      }
+
+      if (!['SENT_TO_LAB', 'SENT_TO_RADIOLOGY', 'SENT_TO_BOTH'].includes(visit.status)) {
+        await tx.visit.update({
+          where: { id: visitId },
+          data: { status: newVisitStatus }
+        });
+        console.log(`✅ Updated visit ${visitId} status to ${newVisitStatus}`);
+      }
+
+      return { batchOrder, createdOrders, billing };
+    });
+
+    const { batchOrder, createdOrders, billing } = result;
+    const totalAmount = createdOrders.reduce((sum, o) => sum + (o.labTest?.price || 0), 0);
 
     res.status(201).json({
       message: `${createdOrders.length} lab test order(s) created successfully`,

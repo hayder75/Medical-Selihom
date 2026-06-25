@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Download, Printer, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import api from '../../services/api';
-import Layout from '../../components/common/Layout';
 
 const AgeGenderDiseaseDistribution = () => {
     const [loading, setLoading] = useState(true);
@@ -159,7 +158,7 @@ const AgeGenderDiseaseDistribution = () => {
     const ageGroups = ['<1', '1-4', '5-14', '15-29', '30-64', '>=65'];
 
     return (
-        <Layout>
+        <>
             <div className="p-6">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -397,7 +396,7 @@ const AgeGenderDiseaseDistribution = () => {
                     </div>
                 )}
             </div>
-        </Layout>
+        </>
     );
 };
 

@@ -3,6 +3,9 @@ const router = express.Router();
 const diseaseController = require('../controllers/diseaseController');
 const authMiddleware = require('../middleware/auth');
 
+// List all diseases (with pagination and search)
+router.get('/', authMiddleware, diseaseController.getAllDiseases);
+
 // Search diseases
 router.get('/search', authMiddleware, diseaseController.searchDiseases);
 

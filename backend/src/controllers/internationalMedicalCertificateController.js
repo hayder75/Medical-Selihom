@@ -38,8 +38,16 @@ const internationalMedicalCertificateController = {
             // Generate Ref No if not provided
             let finalCertificateNo = certificateNo;
             if (!finalCertificateNo) {
-                const count = await prisma.internationalMedicalCertificate.count();
-                finalCertificateNo = `IMC-${String(count + 1).padStart(5, '0')}`;
+                const lastCert = await prisma.internationalMedicalCertificate.findFirst({
+                    orderBy: { certificateNo: 'desc' }
+                });
+                let nextNum = 1;
+                if (lastCert) {
+                    const parts = lastCert.certificateNo.split('-');
+                    const numPart = parseInt(parts[parts.length - 1]);
+                    nextNum = (isNaN(numPart) ? 0 : numPart) + 1;
+                }
+                finalCertificateNo = `IMC-${String(nextNum).padStart(5, '0')}`;
             }
 
             const certificate = await prisma.internationalMedicalCertificate.create({
@@ -68,7 +76,7 @@ const internationalMedicalCertificateController = {
                     vdrl: vdrl || 'Negative',
                     hcv: hcv || 'Negative',
                     hcg: hcg || 'Negative',
-                    fbsRbs: fbsRbs || 'Negative',
+                    fbsRbs: fbsRbs || '',
                     finalAssessment: finalAssessment || 'FIT',
                     directoryName
                 },

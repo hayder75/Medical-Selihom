@@ -63,7 +63,11 @@ const PatientAccounts = () => {
   };
 
   const filteredAccounts = accounts.filter(account => {
-    const matchesSearch = account.patient?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm ||
+      account.patient?.name?.toLowerCase().includes(term) ||
+      account.patient?.id?.toLowerCase().includes(term) ||
+      (account.patient?.mobile && account.patient.mobile.includes(term));
 
     if (activeTab === 'ALL') {
       return matchesSearch;
@@ -327,7 +331,7 @@ const AccountModal = ({ account, type, onClose }) => {
 
   // Search patients
   const searchPatients = async () => {
-    if (formData.searchPatient.trim().length < 1) {
+    if (formData.searchPatient.trim().length < 2) {
       setPatients([]);
       return;
     }
@@ -355,7 +359,7 @@ const AccountModal = ({ account, type, onClose }) => {
   useEffect(() => {
     const delaySearch = setTimeout(() => {
       // Only search if user typed at least 2 chars AND hasn't selected a patient yet
-      if (type === 'create' && formData.searchPatient.trim().length >= 1 && !formData.patientId) {
+      if (type === 'create' && formData.searchPatient.trim().length >= 2 && !formData.patientId) {
         searchPatients();
       } else {
         setPatients([]);
@@ -855,8 +859,8 @@ const AccountDetailedView = ({ account, onClose }) => {
         <div class="container">
           <div class="header">
             <div>
-              <div class="clinic-name">Selihom Medical Clinic</div>
-              <div class="clinic-tagline">Quality Healthcare You Can Trust</div>
+              <div class="clinic-name">${window.__CS__?.name || 'Clinic'}</div>
+              <div class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</div>
             </div>
             <div>
               <div class="report-title">Account Statement</div>
@@ -979,7 +983,7 @@ const AccountDetailedView = ({ account, onClose }) => {
           ` : ''}
 
           <div class="footer">
-            <div>Thank you for choosing Selihom Medical Clinic!</div>
+            <div>Thank you for choosing ${window.__CS__?.name || 'Clinic'}!</div>
             <div>Generated: ${currentDate}</div>
           </div>
         </div>
@@ -1033,8 +1037,8 @@ const AccountDetailedView = ({ account, onClose }) => {
         <div class="container">
           <div class="header">
             <div>
-              <div class="clinic-name">Selihom Medical Clinic</div>
-              <div class="clinic-tagline">Quality Healthcare You Can Trust</div>
+              <div class="clinic-name">${window.__CS__?.name || 'Clinic'}</div>
+              <div class="clinic-tagline">${window.__CS__?.tagline || 'Quality Healthcare You Can Trust'}</div>
             </div>
             <div>
               <div class="report-title">Visit Bill</div>
@@ -1123,7 +1127,7 @@ const AccountDetailedView = ({ account, onClose }) => {
           ` : ''}
 
           <div class="footer">
-            <div>Thank you for choosing Selihom Medical Clinic!</div>
+            <div>Thank you for choosing ${window.__CS__?.name || 'Clinic'}!</div>
             <div>Generated: ${currentDate}</div>
           </div>
         </div>

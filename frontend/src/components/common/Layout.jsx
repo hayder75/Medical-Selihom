@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AccountSettings from './AccountSettings';
@@ -37,7 +37,9 @@ import {
   Trash2,
   Printer,
   Building2,
-  Bed
+  Bed,
+  Percent,
+  CalendarRange
 } from 'lucide-react';
 
 const Layout = ({ children, title, subtitle }) => {
@@ -49,6 +51,7 @@ const Layout = ({ children, title, subtitle }) => {
   const [pendingAdvanceRequestCount, setPendingAdvanceRequestCount] = useState(0);
   const [pageRefreshKey, setPageRefreshKey] = useState(0);
   const [isRefreshingPage, setIsRefreshingPage] = useState(false);
+  const [sidebarVisibility, setSidebarVisibility] = useState(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,15 +59,7 @@ const Layout = ({ children, title, subtitle }) => {
   const [openGroups, setOpenGroups] = useState({});
 
   const toggleGroup = (groupName) => {
-    setOpenGroups(prev => {
-      const newState = {};
-      // If the clicked group was not open, open it. All others remain closed (implicitly by creating new object)
-      // If it was open, it won't be in newState, effectively closing it.
-      if (!prev[groupName]) {
-        newState[groupName] = true;
-      }
-      return newState;
-    });
+    setOpenGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
   };
 
   const handleLogout = () => {
@@ -95,6 +90,28 @@ const Layout = ({ children, title, subtitle }) => {
     }
     return location.pathname.startsWith(href);
   };
+
+  const fetchSidebarVisibility = useCallback(async () => {
+    if (!user?.role) return;
+    try {
+      const response = await api.get('/admin/sidebar-visibility');
+      setSidebarVisibility(response.data.config);
+    } catch (error) {
+      setSidebarVisibility(null);
+    }
+  }, [user?.role]);
+
+  useEffect(() => {
+    const handleVisibilityUpdate = (event) => {
+      setSidebarVisibility(event.detail.config);
+    };
+
+    fetchSidebarVisibility();
+    window.addEventListener('sidebar-visibility-updated', handleVisibilityUpdate);
+    return () => {
+      window.removeEventListener('sidebar-visibility-updated', handleVisibilityUpdate);
+    };
+  }, [user?.role, fetchSidebarVisibility]);
 
   useEffect(() => {
     if (user?.role !== 'ADMIN') return;
@@ -178,147 +195,190 @@ const Layout = ({ children, title, subtitle }) => {
 
   const getNavigationItems = () => {
     const baseItems = [
-      { name: 'Dashboard', href: '/', icon: Home },
+      { name: 'Dashboard', href: '/', icon: Home, key: 'dashboard' },
     ];
+
+    const filterByRole = (items) => {
+      if (!sidebarVisibility || !user?.role) return items;
+      const allowedKeys = sidebarVisibility[user.role];
+      if (!allowedKeys) return items;
+      return items.filter(item => !item.key || allowedKeys.includes(item.key));
+    };
 
     switch (user?.role) {
       case 'ADMIN':
-        return [
+        return filterByRole([
           ...baseItems,
-          { name: 'Staff Management', href: '/admin/staff', icon: Users },
-          { name: 'Patient Management', href: '/admin/patients', icon: Users },
-          { name: 'Service Management', href: '/admin/services', icon: Package },
-          { name: 'Report (Medical Clinc, Doctor, Billing)', href: '/admin/reports', icon: BarChart3 },
-          { name: 'Lab Reports', href: '/admin/lab-reports', icon: TestTube },
-          { name: 'Nurse Report', href: '/admin/nurse-performance', icon: UserCheck },
+          { name: 'Staff Management', href: '/admin/staff', icon: Users, key: 'staffManagement' },
+          { name: 'Patient Management', href: '/admin/patients', icon: Users, key: 'patientManagement' },
+          { name: 'Service Management', href: '/admin/services', icon: Package, key: 'serviceManagement' },
+          {
+            name: 'Reports',
+            icon: BarChart3,
+            group: 'reports_group',
+            key: 'reports',
+            children: [
+              { name: 'Medical Clinic Report', href: '/admin/medical-clinic-report', icon: FileText, key: 'medicalClinic' },
+              { name: 'Doctor Report', href: '/admin/doctor-report', icon: Stethoscope, key: 'doctorPerformance' },
+              { name: 'Billing Report', href: '/admin/billing-report', icon: DollarSign, key: 'billingReport' },
+              { name: 'Lab Report', href: '/admin/lab-reports', icon: TestTube, key: 'labReports' },
+              { name: 'Radiology Report', href: '/admin/radiology-reports', icon: Scan, key: 'radiologyReports' },
+              { name: 'Nurse Report', href: '/admin/nurse-performance', icon: UserCheck, key: 'nurseReport' },
+              { name: 'Pharmacy Report', href: '/admin/pharmacy-report', icon: Pill, key: 'pharmacyReport' },
+            ]
+          },
           {
             name: 'Disease Reports',
             icon: Activity,
             group: 'disease_reports',
+            key: 'diseaseReports',
             children: [
-              { name: 'Disease Reports', href: '/admin/disease-reports', icon: Activity },
-              { name: 'Age-Gender Distribution', href: '/admin/age-gender-disease-distribution', icon: Users },
+              { name: 'Disease Management', href: '/admin/disease-management', icon: Activity, key: 'diseaseManagement' },
+              { name: 'Disease Reports', href: '/admin/disease-reports', icon: Activity, key: 'diseaseReports' },
+              { name: 'Age-Gender Distribution', href: '/admin/age-gender-disease-distribution', icon: Users, key: 'ageGenderDisease' },
+              { name: 'Abortion Care Register', href: '/doctor/abortion-care', icon: Activity, key: 'abortionCare' },
+              { name: 'Family Planning Register', href: '/nurse/family-planning', icon: Users, key: 'familyPlanning' },
+              { name: 'Central Register', href: '/admin/central-register', icon: FileText, key: 'centralRegister' },
             ]
           },
-          { name: 'Doctor Performance', href: '/admin/doctor-performance', icon: Stethoscope },
-          { name: 'Patient Accounts', href: '/admin/patient-accounts', icon: CreditCard },
-          { name: 'Bed Management', href: '/admin/beds', icon: Bed },
-          { name: 'Audit Logs', href: '/admin/audit', icon: FileText },
-          { name: 'Loan Approval', href: '/admin/loan-approval', icon: DollarSign },
-        ];
+          { name: 'Patient Accounts', href: '/admin/patient-accounts', icon: CreditCard, key: 'patientAccounts' },
+          { name: 'Bed Management', href: '/admin/beds', icon: Bed, key: 'bedManagement' },
+          { name: 'Card Products', href: '/admin/card-products', icon: CreditCard, key: 'cardProducts' },
+          { name: 'Doctor Commissions', href: '/admin/doctor-commissions', icon: Percent, key: 'doctorCommissions' },
+          { name: 'Audit Logs', href: '/admin/audit', icon: FileText, key: 'auditLogs' },
+          { name: 'Loan Approval', href: '/admin/loan-approval', icon: DollarSign, key: 'loanApproval' },
+          { name: 'System View', href: '/admin/system-view', icon: Settings, key: 'systemView' },
+        ]);
 
       case 'DOCTOR':
-        return [
+        return filterByRole([
           ...baseItems,
-          { name: 'Patient Queue', href: '/doctor/queue', icon: Stethoscope },
-          { name: 'Daily Work', href: '/doctor/daily-work', icon: Calendar },
-          { name: 'Bed & Admissions', href: '/doctor/admissions', icon: Bed },
-          { name: 'Patient History', href: '/doctor/history', icon: FileText },
-          { name: 'Medical Certificate', href: '/doctor/medical-certificates', icon: FileCheck },
-          { name: 'International Certificate', href: '/doctor/international-certificates', icon: Activity },
-          { name: 'Refer Patient', href: '/doctor/referrals', icon: Building2 },
-          { name: 'Appointments', href: '/appointments', icon: Calendar },
-          { name: 'Loans', href: '/loans', icon: DollarSign },
-        ];
+          { name: 'Patient Queue', href: '/doctor/queue', icon: Stethoscope, key: 'patientQueue' },
+          { name: 'Daily Work', href: '/doctor/daily-work', icon: Calendar, key: 'dailyWork' },
+          { name: 'Bed & Admissions', href: '/doctor/admissions', icon: Bed, key: 'admissions' },
+          { name: 'Patient History', href: '/doctor/history', icon: FileText, key: 'patientHistory' },
+          { name: 'Medical Certificate', href: '/doctor/medical-certificates', icon: FileCheck, key: 'medicalCertificate' },
+          { name: 'International Certificate', href: '/doctor/international-certificates', icon: Activity, key: 'internationalCertificate' },
+
+          { name: 'Refer Patient', href: '/doctor/referrals', icon: Building2, key: 'referPatient' },
+          { name: 'Abortion Care', href: '/doctor/abortion-care', icon: Activity, key: 'abortionCare' },
+          { name: 'Family Planning', href: '/nurse/family-planning', icon: Users, key: 'familyPlanning' },
+          { name: 'Appointments', href: '/appointments', icon: Calendar, key: 'appointments' },
+          { name: 'Loans', href: '/loans', icon: DollarSign, key: 'loans' },
+        ]);
 
       case 'NURSE':
-        return [
+        return filterByRole([
           ...baseItems,
-          { name: 'Triage Queue', href: '/nurse/queue', icon: Stethoscope },
-          { name: 'Bed & Admissions', href: '/nurse/admissions', icon: Bed },
-          { name: 'Daily Tasks', href: '/nurse/tasks', icon: Calendar },
-          { name: 'Walk-in Services', href: '/nurse/walk-in-services', icon: UserPlus },
-          { name: 'Walk-in Orders', href: '/nurse/walk-in-orders', icon: Package },
-          { name: 'Continuous Vitals', href: '/nurse/continuous-vitals', icon: Activity },
-          { name: 'Patient Gallery', href: '/nurse/gallery', icon: Image },
-          { name: 'Appointments', href: '/nurse/appointments', icon: Calendar },
-          { name: 'Loans', href: '/loans', icon: DollarSign },
-        ];
+          { name: 'Triage Queue', href: '/nurse/queue', icon: Stethoscope, key: 'triageQueue' },
+          { name: 'Bed & Admissions', href: '/nurse/admissions', icon: Bed, key: 'admissions' },
+          { name: 'Daily Tasks', href: '/nurse/tasks', icon: Calendar, key: 'dailyTasks' },
+          { name: 'Walk-in Services', href: '/nurse/walk-in-services', icon: UserPlus, key: 'walkInServices' },
+          { name: 'Walk-in Orders', href: '/nurse/walk-in-orders', icon: Package, key: 'walkInOrders' },
+          { name: 'Continuous Vitals', href: '/nurse/continuous-vitals', icon: Activity, key: 'continuousVitals' },
+          { name: 'Family Planning', href: '/nurse/family-planning', icon: Users, key: 'familyPlanning' },
+          { name: 'Patient Gallery', href: '/nurse/gallery', icon: Image, key: 'gallery' },
+          { name: 'Appointments', href: '/nurse/appointments', icon: Calendar, key: 'appointments' },
+          { name: 'Loans', href: '/loans', icon: DollarSign, key: 'loans' },
+        ]);
 
       case 'RECEPTIONIST':
-        return [
+        return filterByRole([
           ...baseItems,
-          { name: 'Patient Registration', href: '/reception/register', icon: Calendar },
-          { name: 'Patient Management', href: '/reception/patients', icon: Users },
-          { name: 'Patient Accounts', href: '/reception/patient-accounts', icon: CreditCard },
-          { name: 'Prints', href: '/reception/prints', icon: Printer },
-          { name: 'Appointments', href: '/reception/appointments', icon: Clock },
-          { name: 'Pre-Registration', href: '/reception/pre-registration', icon: Phone },
-          { name: 'Doctor Queue Management', href: '/reception/doctor-queue', icon: Stethoscope },
-          { name: 'Patient Gallery', href: '/reception/gallery', icon: Image },
-          { name: 'Loans', href: '/loans', icon: DollarSign },
-        ];
+          { name: 'Patient Registration', href: '/reception/register', icon: Calendar, key: 'patientRegistration' },
+          { name: 'Patient Management', href: '/reception/patients', icon: Users, key: 'patientManagement' },
+          { name: 'Patient Accounts', href: '/reception/patient-accounts', icon: CreditCard, key: 'patientAccounts' },
+          { name: 'Prints', href: '/reception/prints', icon: Printer, key: 'prints' },
+          { name: 'Appointments', href: '/reception/appointments', icon: Clock, key: 'appointments' },
+          { name: 'Pre-Registration', href: '/reception/pre-registration', icon: Phone, key: 'preRegistration' },
+          { name: 'Doctor Queue Management', href: '/reception/doctor-queue', icon: Stethoscope, key: 'doctorQueueManagement' },
+          { name: 'Patient Gallery', href: '/reception/gallery', icon: Image, key: 'gallery' },
+          { name: 'Loans', href: '/loans', icon: DollarSign, key: 'loans' },
+        ]);
 
       case 'BILLING_OFFICER':
-        return [
+        return filterByRole([
           ...baseItems,
           {
             name: 'Billing & Finance',
             icon: CreditCard,
             group: 'billing_finance',
+            key: 'billingQueue',
             badgeCount: pendingAdvanceRequestCount,
             children: [
-              { name: 'Billing Queue', href: '/billing/queue', icon: CreditCard },
-              { name: 'Emergency Billing', href: '/emergency-billing', icon: Activity },
-              { name: 'Advance Deposits', href: '/billing/advance-deposits', icon: DollarSign, badgeCount: pendingAdvanceRequestCount },
-              { name: 'Patient Accounts', href: '/billing/patient-accounts', icon: CreditCard },
-              { name: 'Credit Installments', href: '/billing/credit-accounts', icon: CreditCard },
-              { name: 'Cash Management', href: '/cash-management', icon: BarChart3 },
-              { name: 'Loans', href: '/loans', icon: DollarSign },
+              { name: 'Billing Queue', href: '/billing/queue', icon: CreditCard, key: 'billingQueue' },
+              { name: 'Emergency Billing', href: '/emergency-billing', icon: Activity, key: 'emergencyBilling' },
+              { name: 'Advance Deposits', href: '/billing/advance-deposits', icon: DollarSign, key: 'advanceDeposits', badgeCount: pendingAdvanceRequestCount },
+              { name: 'Patient Accounts', href: '/billing/patient-accounts', icon: CreditCard, key: 'patientAccounts' },
+              { name: 'Credit Installments', href: '/billing/credit-accounts', icon: CreditCard, key: 'creditInstallments' },
+              { name: 'Cash Management', href: '/cash-management', icon: BarChart3, key: 'cashManagement' },
+              { name: 'Loans', href: '/loans', icon: DollarSign, key: 'loans' },
             ]
           },
           {
             name: 'Patient Administration',
             icon: Users,
             group: 'patient_admin',
+            key: 'patientManagement',
             children: [
-              { name: 'Patient Registration', href: '/billing/register', icon: UserPlus },
-              { name: 'Patient Management', href: '/billing/patients', icon: Users },
-              { name: 'Pre-Registration', href: '/billing/pre-registration', icon: Phone },
-              { name: 'Appointments', href: '/billing/appointments', icon: Calendar },
-              { name: 'Doctor Queue', href: '/doctor-queue', icon: Stethoscope },
+              { name: 'Patient Registration', href: '/billing/register', icon: UserPlus, key: 'patientRegistration' },
+              { name: 'Patient Management', href: '/billing/patients', icon: Users, key: 'patientManagement' },
+              { name: 'Pre-Registration', href: '/billing/pre-registration', icon: Phone, key: 'preRegistration' },
+              { name: 'Appointments', href: '/billing/appointments', icon: Calendar, key: 'appointments' },
+              { name: 'Doctor Queue', href: '/doctor-queue', icon: Stethoscope, key: 'doctorQueue' },
             ]
           },
           {
             name: 'Clinical & Records',
             icon: FileText,
             group: 'clinical_records',
+            key: 'prints',
             children: [
-              { name: 'Prints', href: '/billing/prints', icon: Printer },
-              { name: 'Walk-In Lab/Radiology', href: '/billing/walk-in-orders', icon: TestTube },
+              { name: 'Prints', href: '/billing/prints', icon: Printer, key: 'prints' },
+              { name: 'Walk-In Lab/Radiology', href: '/billing/walk-in-orders', icon: TestTube, key: 'walkInLabRadiology' },
             ]
           },
-          { name: 'Patient Gallery', href: '/billing/gallery', icon: Image }
-        ];
+          { name: 'Patient Gallery', href: '/billing/gallery', icon: Image, key: 'gallery' }
+        ]);
 
       case 'PHARMACY_BILLING_OFFICER':
       case 'PHARMACIST':
-        return [
+        return filterByRole([
           ...baseItems,
-          { name: 'Pharmacy Billing', href: '/pharmacy-billing/invoices', icon: CreditCard },
-          { name: 'Prescription Queue', href: '/pharmacy/queue', icon: Pill },
-          { name: 'Inventory', href: '/pharmacy/inventory', icon: ShoppingCart },
-          { name: 'Walk-in Sales', href: '/pharmacy/walk-in-sales', icon: ShoppingCart },
-          { name: 'Loans', href: '/loans', icon: DollarSign },
-        ];
+          { name: 'Pharmacy', href: '/pharmacy', icon: Pill, key: 'pharmacy' },
+          { name: 'Sales Report', href: '/pharmacy/sales-report', icon: CalendarRange, key: 'salesReport' },
+          { name: 'Loans', href: '/loans', icon: DollarSign, key: 'loans' },
+        ]);
 
 
       case 'RADIOLOGIST':
-        return [
+        return filterByRole([
           ...baseItems,
-          { name: 'Radiology Orders', href: '/radiology/orders', icon: Scan },
-          { name: 'Walk-In Orders', href: '/radiology/walk-in', icon: UserPlus },
-          { name: 'Loans', href: '/loans', icon: DollarSign },
-        ];
+          { name: 'Radiology Orders', href: '/radiology/orders', icon: Scan, key: 'radiologyOrders' },
+          { name: 'Walk-In Orders', href: '/radiology/walk-in', icon: UserPlus, key: 'radiologyWalkIn' },
+          { name: 'Loans', href: '/loans', icon: DollarSign, key: 'loans' },
+        ]);
 
       case 'LAB_TECHNICIAN':
-        return [
+        return filterByRole([
           ...baseItems,
-          { name: 'Lab Orders', href: '/lab/orders', icon: TestTube },
-          { name: 'Walk-In Orders', href: '/lab/walk-in', icon: UserPlus },
-          { name: 'Lab Reports', href: '/lab/reports', icon: BarChart3 },
-          { name: 'Loans', href: '/loans', icon: DollarSign },
-        ];
+          { name: 'Lab Orders', href: '/lab/orders', icon: TestTube, key: 'labOrders' },
+          { name: 'Walk-In Orders', href: '/lab/walk-in', icon: UserPlus, key: 'labWalkIn' },
+          { name: 'Lab Reports', href: '/lab/reports', icon: BarChart3, key: 'labReports_tech' },
+          { name: 'Loans', href: '/loans', icon: DollarSign, key: 'loans' },
+        ]);
+
+      case 'REPORT':
+        return filterByRole([
+          { name: 'Report Dashboard', href: '/report', icon: BarChart3, key: 'reportDashboard' },
+          { name: 'Central Register', href: '/admin/central-register', icon: FileText, key: 'centralRegister' },
+          { name: 'Disease Tally Sheet', href: '/admin/disease-tally', icon: Activity, key: 'diseaseTally' },
+          { name: 'Disease Reports', href: '/admin/disease-reports', icon: Activity, key: 'diseaseReports' },
+          { name: 'Age-Gender Distribution', href: '/admin/age-gender-disease-distribution', icon: Users, key: 'ageGenderDisease' },
+          { name: 'Lab Reports', href: '/admin/lab-reports', icon: TestTube, key: 'labReports' },
+          { name: 'Family Planning', href: '/nurse/family-planning', icon: Users, key: 'familyPlanning' },
+          { name: 'Abortion Care', href: '/doctor/abortion-care', icon: Activity, key: 'abortionCare' },
+        ]);
 
       default:
         return baseItems;
@@ -333,7 +393,12 @@ const Layout = ({ children, title, subtitle }) => {
       <div className={`fixed inset-y-0 left-0 z-50 w-64 shadow-xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`} style={{ backgroundColor: 'var(--primary)' }}>
         <div className="flex items-center justify-between h-16 px-4 border-b" style={{ borderColor: 'var(--secondary)' }}>
           <div className="flex items-center">
-            <span className="ml-3 text-xl font-bold text-white">Selihom Medical Clinic</span>
+            <img
+              src={window.__CS__?.logoUrl || '/clinic-logo.jpg'}
+              alt={`${window.__CS__?.name || 'Selihom Medium Clinic'} Logo`}
+              className="h-10 w-10 rounded-full object-cover border-2 border-white"
+            />
+            <span className="ml-3 text-xl font-bold text-white">{window.__CS__?.name || 'Selihom Medium Clinic'}</span>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -347,9 +412,9 @@ const Layout = ({ children, title, subtitle }) => {
           {navigationItems.map((item, index) => {
             // If item has children/group, render as dropdown
             if (item.children) {
-              const isOpen = openGroups[item.group];
-              // Check if any child is active
               const hasActiveChild = item.children.some(child => isCurrentPage(child.href));
+              // Keep group open if toggled OR if a child is active
+              const isOpen = openGroups[item.group] || hasActiveChild;
 
               return (
                 <div key={item.name} className="space-y-1">

@@ -311,6 +311,13 @@ exports.getPatientVisits = async (req, res) => {
           take: 1,
           orderBy: { createdAt: 'desc' }
         },
+        medicationOrders: {
+          include: {
+            medication: {
+              select: { name: true }
+            }
+          }
+        },
         _count: {
           select: {
             labOrders: true,

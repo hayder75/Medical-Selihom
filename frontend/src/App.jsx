@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ClinicSettingsProvider } from './contexts/ClinicSettingsContext';
 import Layout from './components/common/Layout';
 
 // Import pages
@@ -11,6 +12,11 @@ import DiseaseReports from './pages/admin/DiseaseReports';
 import SelectedDiseaseReportPage from './pages/admin/SelectedDiseaseReportPage';
 import AgeGenderDiseaseDistribution from './pages/admin/AgeGenderDiseaseDistribution';
 import AdminLabReports from './pages/admin/AdminLabReports';
+import MedicalClinicReport from './pages/admin/MedicalClinicReport';
+import BillingReport from './pages/admin/BillingReport';
+import AdminRadiologyReports from './pages/admin/AdminRadiologyReports';
+import PharmacyReport from './pages/admin/PharmacyReport';
+import DoctorReport from './pages/admin/DoctorReport';
 import PatientRegistration from './pages/patient/PatientRegistration';
 import NurseDashboard from './pages/nurse/NurseDashboard';
 import NurseAppointments from './pages/nurse/NurseAppointments';
@@ -18,7 +24,6 @@ import AdminAppointments from './pages/admin/AdminAppointments';
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import PatientConsultationPage from './pages/doctor/PatientConsultationPage';
 import BillingDashboard from './pages/billing/BillingDashboard';
-import PharmacyBillingDashboard from './pages/billing/PharmacyBillingDashboard';
 import EmergencyBilling from './pages/billing/EmergencyBilling';
 import DailyCashManagement from './pages/billing/DailyCashManagement';
 import DoctorQueueManagement from './pages/billing/DoctorQueueManagement';
@@ -29,6 +34,7 @@ import LabReports from './pages/lab/LabReports';
 import WalkInOrders from './pages/lab/WalkInOrders';
 import RadiologyWalkInOrders from './pages/radiology/WalkInOrders';
 import PharmacyDashboard from './pages/pharmacy/PharmacyDashboard';
+import SalesReport from './components/pharmacy/SalesReport';
 import AppointmentsPage from './pages/appointments/AppointmentsPage';
 import DoctorAppointments from './pages/doctor/DoctorAppointments';
 import ReceptionDashboard from './pages/reception/ReceptionDashboard';
@@ -38,9 +44,16 @@ import ReceptionAppointments from './pages/reception/ReceptionAppointments';
 import PreRegistration from './pages/reception/PreRegistration';
 import ReceptionDoctorQueueManagement from './pages/reception/DoctorQueueManagement';
 import PatientGallery from './pages/shared/PatientGallery';
+import FamilyPlanningPage from './pages/nurse/FamilyPlanningPage';
+import AbortionCarePage from './pages/doctor/AbortionCarePage';
 import Loans from './components/shared/Loans';
 import AdmissionManagement from './pages/accommodation/AdmissionManagement';
 import PatientAccounts from './components/admin/PatientAccounts';
+import SystemView from './pages/admin/SystemView';
+import CentralRegisterPage from './pages/admin/CentralRegisterPage';
+import DiseaseTallySheetPage from './pages/admin/DiseaseTallySheetPage';
+import DiseaseManagement from './pages/admin/DiseaseManagement';
+import ReportDashboard from './pages/report/ReportDashboard';
 import BillingPatientHistory from './components/billing/BillingPatientHistory';
 
 // Protected Route Component
@@ -99,6 +112,8 @@ const AppRoutes = () => {
         return '/lab';
       case 'RADIOLOGIST':
         return '/radiology';
+      case 'REPORT':
+        return '/report';
       default:
         return '/login';
     }
@@ -137,8 +152,10 @@ const AppRoutes = () => {
         <Route
           path="/admin/disease-reports"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
-              <DiseaseReports />
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'REPORT']}>
+              <Layout title="Disease Reports" subtitle="Monthly disease reports">
+                <DiseaseReports />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -146,8 +163,10 @@ const AppRoutes = () => {
         <Route
           path="/admin/age-gender-disease-distribution"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
-              <AgeGenderDiseaseDistribution />
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'REPORT']}>
+              <Layout title="Age-Gender Distribution" subtitle="Disease distribution by age and gender">
+                <AgeGenderDiseaseDistribution />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -155,8 +174,10 @@ const AppRoutes = () => {
         <Route
           path="/admin/selected-disease-report"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
-              <SelectedDiseaseReportPage />
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'REPORT']}>
+              <Layout title="Selected Disease Report" subtitle="Disease-specific report">
+                <SelectedDiseaseReportPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -164,8 +185,110 @@ const AppRoutes = () => {
         <Route
           path="/admin/lab-reports"
           element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'REPORT']}>
+              <Layout title="Lab Reports" subtitle="Laboratory test reports">
+                <AdminLabReports />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/central-register"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'REPORT']}>
+              <Layout title="Central Register" subtitle="Patient registration record">
+                <CentralRegisterPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/disease-tally"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'REPORT']}>
+              <Layout title="Disease Tally Sheet" subtitle="Diseases information tally by age and sex">
+                <DiseaseTallySheetPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/disease-management"
+          element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminLabReports />
+              <Layout title="Disease Management" subtitle="Manage disease codes, names, and reporting">
+                <DiseaseManagement />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/system-view"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Layout title="System View Settings" subtitle="Control which sidebar items each role can see">
+                <SystemView />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+
+        <Route
+          path="/admin/medical-clinic-report"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Layout title="Medical Clinic Report" subtitle="Clinic facility report">
+                <MedicalClinicReport />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/billing-report"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Layout title="Billing Report" subtitle="Billing and revenue report">
+                <BillingReport />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/radiology-reports"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Layout title="Radiology Report" subtitle="Radiology examination report">
+                <AdminRadiologyReports />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/pharmacy-report"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Layout title="Pharmacy Report" subtitle="Pharmacy sales and inventory report">
+                <PharmacyReport />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/doctor-report"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Layout title="Doctor Report" subtitle="Doctor performance and activity report">
+                <DoctorReport />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -207,6 +330,17 @@ const AppRoutes = () => {
             <ProtectedRoute allowedRoles={['NURSE']}>
               <Layout title="Nurse Dashboard" subtitle="Patient triage and daily tasks">
                 <NurseDashboard />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/nurse/family-planning"
+          element={
+            <ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'ADMIN', 'REPORT']}>
+              <Layout title="Family Planning" subtitle="Family planning registration and follow-up">
+                <FamilyPlanningPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -366,6 +500,17 @@ const AppRoutes = () => {
         />
 
         <Route
+          path="/doctor/abortion-care"
+          element={
+            <ProtectedRoute allowedRoles={['DOCTOR', 'NURSE', 'ADMIN', 'REPORT']}>
+              <Layout title="Abortion Care" subtitle="Comprehensive abortion care services register">
+                <AbortionCarePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/doctor/admissions"
           element={
             <ProtectedRoute allowedRoles={['DOCTOR', 'ADMIN', 'NURSE']}>
@@ -453,13 +598,7 @@ const AppRoutes = () => {
 
         <Route
           path="/pharmacy-billing/*"
-          element={
-            <ProtectedRoute allowedRoles={['PHARMACY_BILLING_OFFICER', 'PHARMACIST']}>
-              <Layout title="Pharmacy Billing Dashboard" subtitle="Pharmacy payment processing and medication dispensing">
-                <PharmacyBillingDashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/pharmacy" replace />}
         />
 
 
@@ -530,10 +669,20 @@ const AppRoutes = () => {
         />
 
         <Route
+          path="/pharmacy/sales-report"
+          element={
+            <ProtectedRoute allowedRoles={['PHARMACIST', 'PHARMACY_BILLING_OFFICER']}>
+              <Layout title="Sales Report" subtitle="Pharmacy sales overview by date">
+                <SalesReport />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/pharmacy/*"
           element={
-            <ProtectedRoute allowedRoles={['PHARMACIST']}>
-              <Layout title="Pharmacy Dashboard" subtitle="Medication dispensing and inventory management">
+            <ProtectedRoute allowedRoles={['PHARMACIST', 'PHARMACY_BILLING_OFFICER']}>
+              <Layout title="Pharmacy" subtitle="Medication dispensing, billing, and inventory">
                 <PharmacyDashboard />
               </Layout>
             </ProtectedRoute>
@@ -545,6 +694,17 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
               <DoctorAppointments />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/report/*"
+          element={
+            <ProtectedRoute allowedRoles={['REPORT']}>
+              <Layout title="Report Dashboard" subtitle="Health facility reports and statistics">
+                <ReportDashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -570,6 +730,7 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <AuthProvider>
+      <ClinicSettingsProvider>
       <div className="App">
         <AppRoutes />
         <Toaster
@@ -597,6 +758,7 @@ const App = () => {
           }}
         />
       </div>
+      </ClinicSettingsProvider>
     </AuthProvider>
   );
 };
